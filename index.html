@@ -182,6 +182,17 @@ function applyPublicState(remoteState){
 
   const remoteRev = Number(remoteState.rev || 0);
 
+  // 如果這筆更新是自己剛 push 的（updatedBy === self），跳過，避免重複套用
+  if(remoteState.updatedBy === online.playerId && remoteRev <= online.localRev){
+    online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev);
+    return;
+  }
+
+  // 如果比目前已套用的版本還舊，跳過
+  if(remoteRev > 0 && remoteRev <= (online.lastAppliedRev || 0)){
+    return;
+  }
+
   online.isApplyingRemote = true;
   online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev || 0);
   online.localRev = Math.max(online.localRev || 0, remoteRev || 0);
@@ -247,9 +258,10 @@ function syncPushGameState(reason = "update"){
     reason
   };
 
-  return online.roomRef.child("gameState").set(payload).then(() => {
-    applyPublicState(payload);
-  }).catch(err => {
+  // Push 到 Firebase；不需要再 applyPublicState，因為本地狀態已是最新的。
+  // Firebase 的 .on("value") 監聽器收到時，因為 updatedBy === playerId 且 rev 一樣，
+  // 會被下方的 applyPublicState 裡的重複判斷擋掉。
+  return online.roomRef.child("gameState").set(payload).catch(err => {
     console.error("syncPushGameState failed", err);
     setLog("同步失敗，請重新整理或重新加入房間。");
   });
@@ -399,9 +411,7 @@ function enterOnlineRoom(code, side, ref){
     applyPublicState(remoteState);
   });
 
-  ref.child("gameState").get().then(snap => {
-    if(snap.exists()) applyPublicState(snap.val());
-  });
+  // 注意：.on("value") 已經會立即回傳目前值，不需要再額外 .get()
 
   startOnlinePolling();
   updateOnlineStatus();
@@ -820,8 +830,23 @@ function spinSkillWheel(side){
   render();
   if(typeof syncPushGameState === "function") syncPushGameState("spinSkillWheelStart");
 
+  const spinTurnSnapshot = state.turn;
+
   setTimeout(() => {
     ensureSkillState();
+
+    // 如果回合已換人（endTurn 先發生），不要再覆蓋 Firebase 上的新狀態
+    if(state.turn !== spinTurnSnapshot){
+      // 只更新本地 UI，不 push 到 Firebase
+      if(success && rewardSkill){
+        state.skillCards[side].push(rewardSkill);
+        state.skillSpinUi[side] = { angle: finalAngle, result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}`, spinning: false };
+      }else{
+        state.skillSpinUi[side] = { angle: finalAngle, result: "未抽中", spinning: false };
+      }
+      render();
+      return;
+    }
 
     if(success && rewardSkill){
       state.skillCards[side].push(rewardSkill);
@@ -2055,20 +2080,6 @@ function handleDropOnCell(side, cellIdx){
       attackPiece(drag.side, drag.idx, side, cellIdx);
     }
   }
-}
-
-function markNukePreview(side, centerIdx){
-  for(let r = row(centerIdx)-1; r <= row(centerIdx)+1; r++){
-    for(let c = col(centerIdx)-1; c <= col(centerIdx)+1; c++){
-      if(r < 0 || r > 4 || c < 0 || c > 4) continue;
-      const targetIdx = idx(r,c);
-      const cell = document.querySelector(`[data-side="${side}"][data-idx="${targetIdx}"]`);
-      if(cell) cell.classList.add("dragNukeArea");
-    }
-  }
-
-  const center = document.querySelector(`[data-side="${side}"][data-idx="${centerIdx}"]`);
-  if(center) center.classList.add("dragNukeCenter");
 }
 
 function setLog(msg){
