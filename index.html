@@ -139,7 +139,8 @@ let online = {
   roomRef: null,
   lastAppliedRev: 0,
   localRev: 0,
-  isApplyingRemote: false
+  isApplyingRemote: false,
+  pollTimer: null
 };
 
 
@@ -180,7 +181,6 @@ function applyPublicState(remoteState){
   if(!remoteState) return;
 
   const remoteRev = Number(remoteState.rev || 0);
-  if(remoteRev && remoteRev < (online.lastAppliedRev || 0)) return;
 
   online.isApplyingRemote = true;
   online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev || 0);
@@ -213,6 +213,27 @@ function applyPublicState(remoteState){
   online.isApplyingRemote = false;
 }
 
+
+function pollOnlineRoomOnce(){
+  if(!online.enabled || !online.roomRef) return;
+
+  online.roomRef.child("players").get().then(snap => {
+    const players = snap.val() || {};
+    if(players.red === online.playerId) online.playerSide = "red";
+    else if(players.blue === online.playerId) online.playerSide = "blue";
+    updateOnlineStatus();
+  }).catch(err => console.warn("players poll failed", err));
+
+  online.roomRef.child("gameState").get().then(snap => {
+    if(snap.exists()) applyPublicState(snap.val());
+  }).catch(err => console.warn("gameState poll failed", err));
+}
+
+function startOnlinePolling(){
+  if(online.pollTimer) clearInterval(online.pollTimer);
+  online.pollTimer = setInterval(pollOnlineRoomOnce, 800);
+}
+
 function syncPushGameState(reason = "update"){
   if(!online.enabled || !online.roomRef || online.isApplyingRemote) return Promise.resolve();
 
@@ -236,7 +257,9 @@ function syncPushGameState(reason = "update"){
 
 function renderAndSync(reason = "update"){
   render();
-  return syncPushGameState(reason);
+  return syncPushGameState(reason).then(() => {
+    if(online.enabled) pollOnlineRoomOnce();
+  });
 }
 
 function canUseOnlineTurn(){
@@ -346,6 +369,11 @@ function enterOnlineRoom(code, side, ref){
     online.roomRef.child("players").off();
   }
 
+  if(online.pollTimer){
+    clearInterval(online.pollTimer);
+    online.pollTimer = null;
+  }
+
   online.enabled = true;
   online.roomCode = code;
   online.playerSide = side;
@@ -362,6 +390,7 @@ function enterOnlineRoom(code, side, ref){
     if(players.red === online.playerId) online.playerSide = "red";
     else if(players.blue === online.playerId) online.playerSide = "blue";
     updateOnlineStatus();
+    render();
   });
 
   ref.child("gameState").on("value", snap => {
@@ -374,12 +403,18 @@ function enterOnlineRoom(code, side, ref){
     if(snap.exists()) applyPublicState(snap.val());
   });
 
+  startOnlinePolling();
   updateOnlineStatus();
 }
 
 function leaveOnlineRoom(){
   if(online.roomRef){
     online.roomRef.child("gameState").off();
+  }
+
+  if(online.pollTimer){
+    clearInterval(online.pollTimer);
+    online.pollTimer = null;
   }
 
   online.enabled = false;
