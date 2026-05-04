@@ -136,7 +136,9 @@ let online = {
   playerSide: null,
   playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
   suppressPush: false,
-  roomRef: null
+  roomRef: null,
+  lastAppliedRev: 0,
+  isApplyingRemote: false
 };
 
 
@@ -168,14 +170,19 @@ function getPublicState(){
     burstBowReady: state.burstBowReady || { red: false, blue: false },
     skillSpinUi: state.skillSpinUi || { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } },
     actionDone: state.actionDone,
-    gameOver: state.gameOver
+    gameOver: state.gameOver,
+    logText: document.getElementById("log") ? document.getElementById("log").textContent : ""
   };
 }
 
 function applyPublicState(remoteState){
   if(!remoteState) return;
 
-  online.suppressPush = true;
+  const remoteRev = Number(remoteState.rev || 0);
+  if(remoteRev && remoteRev < (online.lastAppliedRev || 0)) return;
+
+  online.isApplyingRemote = true;
+  online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev || 0);
 
   state = {
     ...state,
@@ -194,29 +201,48 @@ function applyPublicState(remoteState){
   ensureSkillState();
 
   render();
+
+  if(remoteState.logText){
+    const logEl = document.getElementById("log");
+    if(logEl) logEl.textContent = remoteState.logText;
+  }
+
   updateOnlineStatus();
-  online.suppressPush = false;
+  online.isApplyingRemote = false;
 }
 
 function syncPushGameState(reason = "update"){
-  if(!online.enabled || !online.roomRef || online.suppressPush) return;
+  if(!online.enabled || !online.roomRef || online.isApplyingRemote) return Promise.resolve();
 
-  online.roomRef.child("gameState").set({
-    ...getPublicState(),
-    updatedAt: firebase.database.ServerValue.TIMESTAMP,
-    updatedBy: online.playerId,
-    reason
+  const gameRef = online.roomRef.child("gameState");
+
+  return gameRef.transaction(current => {
+    const nextRev = ((current && Number(current.rev)) || 0) + 1;
+    return {
+      ...getPublicState(),
+      rev: nextRev,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedBy: online.playerId,
+      reason
+    };
+  }).then(result => {
+    if(result && result.snapshot && result.snapshot.exists()){
+      applyPublicState(result.snapshot.val());
+    }
+  }).catch(err => {
+    console.error("syncPushGameState failed", err);
+    setLog("同步失敗，請重新整理或重新加入房間。");
   });
 }
 
 function renderAndSync(reason = "update"){
   render();
-  syncPushGameState(reason);
+  return syncPushGameState(reason);
 }
 
 function canUseOnlineTurn(){
   if(!online.enabled) return true;
-  if(online.playerSide === "spectator") return false;
+  if(!online.playerSide || online.playerSide === "spectator") return false;
   return online.playerSide === state.turn;
 }
 
@@ -236,7 +262,7 @@ function updateOnlineStatus(message){
   el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜目前${turnText}回合｜${myTurn}`;
 }
 
-async function createOnlineRoom(){
+async  function createOnlineRoom(){
   try{
     initFirebaseOnline();
 
@@ -249,7 +275,17 @@ async function createOnlineRoom(){
     }
 
     state = createInitialState ? createInitialState() : state;
-    render();
+    state.turn = "red";
+    state.actionDone = false;
+    state.gameOver = false;
+
+    const initialState = {
+      ...getPublicState(),
+      rev: 1,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedBy: online.playerId,
+      reason: "create"
+    };
 
     await ref.set({
       createdAt: firebase.database.ServerValue.TIMESTAMP,
@@ -257,12 +293,7 @@ async function createOnlineRoom(){
         red: online.playerId,
         blue: null
       },
-      gameState: {
-        ...getPublicState(),
-        updatedAt: firebase.database.ServerValue.TIMESTAMP,
-        updatedBy: online.playerId,
-        reason: "create"
-      }
+      gameState: initialState
     });
 
     enterOnlineRoom(code, "red", ref);
@@ -272,7 +303,7 @@ async function createOnlineRoom(){
   }
 }
 
-async async function joinOnlineRoom(){
+async  function joinOnlineRoom(){
   try{
     initFirebaseOnline();
 
@@ -292,25 +323,39 @@ async async function joinOnlineRoom(){
       return;
     }
 
-    const data = snap.val() || {};
-    const players = data.players || {};
-    let side = null;
+    const playersRef = ref.child("players");
+    let joinedSide = null;
 
-    if(players.red === online.playerId){
-      side = "red";
-    }else if(players.blue === online.playerId){
-      side = "blue";
-    }else if(!players.red){
-      side = "red";
-      await ref.child("players/red").set(online.playerId);
-    }else if(!players.blue){
-      side = "blue";
-      await ref.child("players/blue").set(online.playerId);
-    }else{
-      side = "spectator";
-    }
+    await playersRef.transaction(players => {
+      players = players || {};
 
-    enterOnlineRoom(code, side, ref);
+      if(players.red === online.playerId){
+        joinedSide = "red";
+        return players;
+      }
+
+      if(players.blue === online.playerId){
+        joinedSide = "blue";
+        return players;
+      }
+
+      if(!players.red){
+        players.red = online.playerId;
+        joinedSide = "red";
+        return players;
+      }
+
+      if(!players.blue){
+        players.blue = online.playerId;
+        joinedSide = "blue";
+        return players;
+      }
+
+      joinedSide = "spectator";
+      return players;
+    });
+
+    enterOnlineRoom(code, joinedSide || "spectator", ref);
   }catch(err){
     console.error(err);
     updateOnlineStatus("加入房間失敗，請確認房間碼或資料庫設定。");
@@ -320,20 +365,29 @@ async async function joinOnlineRoom(){
 function enterOnlineRoom(code, side, ref){
   if(online.roomRef){
     online.roomRef.child("gameState").off();
+    online.roomRef.child("players").off();
   }
 
   online.enabled = true;
   online.roomCode = code;
   online.playerSide = side;
   online.roomRef = ref;
+  online.lastAppliedRev = 0;
+  online.isApplyingRemote = false;
 
   const input = document.getElementById("roomCodeInput");
   if(input) input.value = code;
 
+  ref.child("players").on("value", snap => {
+    const players = snap.val() || {};
+    if(players.red === online.playerId) online.playerSide = "red";
+    else if(players.blue === online.playerId) online.playerSide = "blue";
+    updateOnlineStatus();
+  });
+
   ref.child("gameState").on("value", snap => {
     const remoteState = snap.val();
     if(!remoteState) return;
-    if(remoteState.updatedBy === online.playerId && !online.suppressPush) return;
     applyPublicState(remoteState);
   });
 
@@ -2009,7 +2063,7 @@ function setLog(msg){
 
 
 function wrapOnlineSync(){
-  // 各動作已直接同步到 Firebase，這裡保留空函式避免舊呼叫出錯。
+  // 各動作已直接同步到 Firebase。
 }
 
 document.getElementById("endTurnBtn").addEventListener("click", endTurn);
