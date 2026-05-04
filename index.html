@@ -134,14 +134,14 @@ let online = {
   enabled: false,
   roomCode: null,
   playerSide: null,
-  playerId: localStorage.getItem("dragonWarPlayerId") || null,
+  playerId: sessionStorage.getItem("dragonWarPlayerId") || null,
   suppressPush: false,
   roomRef: null
 };
 
 if(!online.playerId){
   online.playerId = "p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  localStorage.setItem("dragonWarPlayerId", online.playerId);
+  sessionStorage.setItem("dragonWarPlayerId", online.playerId);
 }
 
 function initFirebaseOnline(){
@@ -389,18 +389,19 @@ function assetFor(owner, type){
   if(type === NUKE) return "nuke.png";
   if(type === TRAP) return "trap.png";
 
+  // 素材全部放在 HTML 同一層，不使用 RED/BLUE 資料夾
   if(owner === "red"){
-    if(type === SWORD) return "RED/REDsword.png";
-    if(type === BOW) return "RED/REDbow.png";
-    if(type === CHARIOT) return "RED/REDchariot.png";
-    if(type === SHIELD) return "RED/REDshield.png";
+    if(type === SWORD) return "REDsword.png";
+    if(type === BOW) return "REDbow.png";
+    if(type === CHARIOT) return "REDchariot.png";
+    if(type === SHIELD) return "REDshield.png";
   }
 
   if(owner === "blue"){
-    if(type === SWORD) return "BLUE/BLUEsword.png";
-    if(type === BOW) return "BLUE/BLUEbow.png";
-    if(type === CHARIOT) return "BLUE/BLUEchariot.png";
-    if(type === SHIELD) return "BLUE/BLUEshield.png";
+    if(type === SWORD) return "BLUEsword.png";
+    if(type === BOW) return "BLUEbow.png";
+    if(type === CHARIOT) return "BLUEchariot.png";
+    if(type === SHIELD) return "BLUEshield.png";
   }
 
   return "";
