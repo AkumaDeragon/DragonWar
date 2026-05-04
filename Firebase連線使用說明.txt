@@ -1,0 +1,11 @@
+使用方式：
+1. 把物原戰爭.html、物原戰爭.css、nuke.png、trap.png、RED/、BLUE/ 放同一個資料夾。
+2. 開啟物原戰爭.html。
+3. 玩家 A 點「建立房間」，會出現房間碼。
+4. 玩家 B 開同一個 HTML，輸入房間碼，點「加入房間」。
+5. 紅方建立房間，藍方加入房間。
+6. 棋盤、手牌、回合、陷阱、護盾、冷卻會透過 Firebase Realtime Database 同步。
+
+注意：
+- 你目前 Firebase Realtime Database 如果是 Test mode，適合測試。
+- 正式公開前要改安全規則，不然任何知道資料庫網址的人都可能讀寫資料。
