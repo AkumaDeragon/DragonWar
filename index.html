@@ -138,6 +138,7 @@ let online = {
   suppressPush: false,
   roomRef: null,
   lastAppliedRev: 0,
+  localRev: 0,
   isApplyingRemote: false
 };
 
@@ -183,6 +184,7 @@ function applyPublicState(remoteState){
 
   online.isApplyingRemote = true;
   online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev || 0);
+  online.localRev = Math.max(online.localRev || 0, remoteRev || 0);
 
   state = {
     ...state,
@@ -214,21 +216,18 @@ function applyPublicState(remoteState){
 function syncPushGameState(reason = "update"){
   if(!online.enabled || !online.roomRef || online.isApplyingRemote) return Promise.resolve();
 
-  const gameRef = online.roomRef.child("gameState");
+  online.localRev = Math.max(online.localRev || 0, online.lastAppliedRev || 0) + 1;
 
-  return gameRef.transaction(current => {
-    const nextRev = ((current && Number(current.rev)) || 0) + 1;
-    return {
-      ...getPublicState(),
-      rev: nextRev,
-      updatedAt: firebase.database.ServerValue.TIMESTAMP,
-      updatedBy: online.playerId,
-      reason
-    };
-  }).then(result => {
-    if(result && result.snapshot && result.snapshot.exists()){
-      applyPublicState(result.snapshot.val());
-    }
+  const payload = {
+    ...getPublicState(),
+    rev: online.localRev,
+    updatedAt: Date.now(),
+    updatedBy: online.playerId,
+    reason
+  };
+
+  return online.roomRef.child("gameState").set(payload).then(() => {
+    applyPublicState(payload);
   }).catch(err => {
     console.error("syncPushGameState failed", err);
     setLog("同步失敗，請重新整理或重新加入房間。");
@@ -262,7 +261,7 @@ function updateOnlineStatus(message){
   el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜目前${turnText}回合｜${myTurn}`;
 }
 
-async  function createOnlineRoom(){
+async function createOnlineRoom(){
   try{
     initFirebaseOnline();
 
@@ -282,13 +281,13 @@ async  function createOnlineRoom(){
     const initialState = {
       ...getPublicState(),
       rev: 1,
-      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedAt: Date.now(),
       updatedBy: online.playerId,
       reason: "create"
     };
 
     await ref.set({
-      createdAt: firebase.database.ServerValue.TIMESTAMP,
+      createdAt: Date.now(),
       players: {
         red: online.playerId,
         blue: null
@@ -303,7 +302,7 @@ async  function createOnlineRoom(){
   }
 }
 
-async  function joinOnlineRoom(){
+async function joinOnlineRoom(){
   try{
     initFirebaseOnline();
 
@@ -323,39 +322,18 @@ async  function joinOnlineRoom(){
       return;
     }
 
-    const playersRef = ref.child("players");
+    const data = snap.val() || {};
+    const players = data.players || {};
     let joinedSide = null;
 
-    await playersRef.transaction(players => {
-      players = players || {};
+    if(players.red === online.playerId){
+      joinedSide = "red";
+    }else{
+      joinedSide = "blue";
+      await ref.child("players/blue").set(online.playerId);
+    }
 
-      if(players.red === online.playerId){
-        joinedSide = "red";
-        return players;
-      }
-
-      if(players.blue === online.playerId){
-        joinedSide = "blue";
-        return players;
-      }
-
-      if(!players.red){
-        players.red = online.playerId;
-        joinedSide = "red";
-        return players;
-      }
-
-      if(!players.blue){
-        players.blue = online.playerId;
-        joinedSide = "blue";
-        return players;
-      }
-
-      joinedSide = "spectator";
-      return players;
-    });
-
-    enterOnlineRoom(code, joinedSide || "spectator", ref);
+    enterOnlineRoom(code, joinedSide, ref);
   }catch(err){
     console.error(err);
     updateOnlineStatus("加入房間失敗，請確認房間碼或資料庫設定。");
@@ -373,6 +351,7 @@ function enterOnlineRoom(code, side, ref){
   online.playerSide = side;
   online.roomRef = ref;
   online.lastAppliedRev = 0;
+  online.localRev = 0;
   online.isApplyingRemote = false;
 
   const input = document.getElementById("roomCodeInput");
