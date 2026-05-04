@@ -134,15 +134,11 @@ let online = {
   enabled: false,
   roomCode: null,
   playerSide: null,
-  playerId: sessionStorage.getItem("dragonWarPlayerId") || null,
+  playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
   suppressPush: false,
   roomRef: null
 };
 
-if(!online.playerId){
-  online.playerId = "p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-  sessionStorage.setItem("dragonWarPlayerId", online.playerId);
-}
 
 function initFirebaseOnline(){
   if(firebaseApp || typeof firebase === "undefined") return;
@@ -211,6 +207,11 @@ function syncPushGameState(reason = "update"){
     updatedBy: online.playerId,
     reason
   });
+}
+
+function renderAndSync(reason = "update"){
+  render();
+  syncPushGameState(reason);
 }
 
 function canUseOnlineTurn(){
@@ -597,7 +598,7 @@ function placeTrapCard(boardSide, cellIdx){
   state.actionDone = true;
 
   setLog(`陷阱已設置 3 格。只有車會被擋住，其他棋子會當作不存在。`);
-  render();
+  renderAndSync("placeTrapCard");
 }
 
 
@@ -800,8 +801,7 @@ function useSkillCard(side, skillIndex){
     state.freezeNext[target] = true;
     state.skillCards[side].splice(skillIndex, 1);
     setLog(`❄ ${side === "red" ? "紅方" : "藍方"}使用凍結！${target === "red" ? "紅方" : "藍方"}下一回合將跳過。`);
-    render();
-    if(typeof syncPushGameState === "function") syncPushGameState("useFreeze");
+    renderAndSync("useFreeze");
     return;
   }
 
@@ -809,8 +809,7 @@ function useSkillCard(side, skillIndex){
     state.burstBowReady[side] = true;
     state.skillCards[side].splice(skillIndex, 1);
     setLog(`💥➹ 爆裂弓已啟動！你的下一次弓箭攻擊可以射任意敵方棋子。`);
-    render();
-    if(typeof syncPushGameState === "function") syncPushGameState("useBurstBow");
+    renderAndSync("useBurstBow");
     return;
   }
 }
@@ -1194,7 +1193,7 @@ function placeCard(boardSide, cellIdx){
   state.selectedCard = null;
   state.actionDone = true;
   setLog(`${cur === "red" ? "紅方" : "藍方"}放置了${CARD_NAMES[card.type]}。`);
-  render();
+  renderAndSync("placeCard");
 }
 
 
@@ -1231,7 +1230,7 @@ function useNukeCard(boardSide, cellIdx){
   state.selectedPiece = null;
   state.actionDone = true;
 
-  render();
+  renderAndSync("useNukeCard");
 
   hitCells.forEach((targetIdx, index) => {
     const blastCell = document.querySelector(`[data-side="${boardSide}"][data-idx="${targetIdx}"]`);
@@ -1272,7 +1271,7 @@ function applyShieldCard(boardSide, cellIdx){
   state.selectedCard = null;
   state.actionDone = true;
   setLog(`${cur === "red" ? "紅方" : "藍方"}替${CARD_NAMES[target.type]}套上護盾，目前 ${target.shields} 層。`);
-  render();
+  renderAndSync("applyShieldCard");
 }
 
 function getSwordMoves(fromSide, fromIdx){
@@ -1446,7 +1445,7 @@ function moveChariot(fromSide, fromIdx, toSide, toIdx){
     setLog("車已移動第一次，黃色格子還可以再走一次。");
   }
 
-  render();
+  renderAndSync("moveChariot");
 }
 
 function getBowTargets(fromSide, fromIdx){
@@ -1523,7 +1522,7 @@ function moveSword(fromSide, fromIdx, toSide, toIdx){
   }
 
   setLog(move.type === "cross" ? "劍跨河成功！" : "移動成功。");
-  render();
+  renderAndSync("moveSword");
 }
 
 function attackPiece(fromSide, fromIdx, targetSide, targetIdx){
@@ -1562,7 +1561,7 @@ function attackPiece(fromSide, fromIdx, targetSide, targetIdx){
 
   state.selectedPiece = null;
   state.actionDone = true;
-  render();
+  renderAndSync("attackPiece");
 }
 
 function isWinningSword(boardSide, pieceIdx){
@@ -1581,7 +1580,7 @@ function win(side){
   state.gameOver = true;
   state.actionDone = true;
   setLog(`🏆 ${side === "red" ? "紅方" : "藍方"}獲勝！劍攻到底線！`);
-  render();
+  renderAndSync("win");
 
   const oldBtn = document.getElementById("restartBtn");
   if(oldBtn) oldBtn.remove();
@@ -1603,7 +1602,7 @@ function restart(){
   const btn = document.getElementById("restartBtn");
   if(btn) btn.remove();
   setLog("歡迎！紅方先手。");
-  render();
+  renderAndSync("restart");
 }
 
 function endTurn(){
@@ -1639,12 +1638,12 @@ function endTurn(){
   }
 
   if(skipFrozenTurnIfNeeded(next)){
-    render();
+    renderAndSync("endTurnFrozen");
     return;
   }
 
   setLog(`${next === "red" ? "紅方" : "藍方"}回合開始。`);
-  render();
+  renderAndSync("endTurn");
 }
 
 function highlight(){
@@ -2010,40 +2009,7 @@ function setLog(msg){
 
 
 function wrapOnlineSync(){
-  const functionNames = [
-    "placeCard",
-    "useNukeCard",
-    "applyShieldCard",
-    "placeTrapCard",
-    "moveSword",
-    "moveChariot",
-    "attackPiece",
-    "endTurn",
-    "restart",
-    "spinSkillWheel",
-    "useSkillCard"
-  ];
-
-  functionNames.forEach(name => {
-    const original = window[name];
-    if(typeof original !== "function" || original.__onlineWrapped) return;
-
-    const wrapped = function(...args){
-      const before = JSON.stringify(getPublicState());
-      const result = original.apply(this, args);
-      const after = JSON.stringify(getPublicState());
-
-      if(before !== after){
-        syncPushGameState(name);
-      }
-
-      updateOnlineStatus();
-      return result;
-    };
-
-    wrapped.__onlineWrapped = true;
-    window[name] = wrapped;
-  });
+  // 各動作已直接同步到 Firebase，這裡保留空函式避免舊呼叫出錯。
 }
 
 document.getElementById("endTurnBtn").addEventListener("click", endTurn);
