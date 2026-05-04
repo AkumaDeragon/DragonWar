@@ -215,6 +215,7 @@ function syncPushGameState(reason = "update"){
 
 function canUseOnlineTurn(){
   if(!online.enabled) return true;
+  if(online.playerSide === "spectator") return false;
   return online.playerSide === state.turn;
 }
 
@@ -229,7 +230,7 @@ function updateOnlineStatus(message){
 
   const sideText = online.playerSide === "red" ? "紅方" : online.playerSide === "blue" ? "藍方" : "觀戰";
   const turnText = state.turn === "red" ? "紅方" : "藍方";
-  const myTurn = online.playerSide === state.turn ? "輪到你" : "等待對手";
+  const myTurn = online.playerSide === "spectator" ? "觀戰中，不能操作" : (online.playerSide === state.turn ? "輪到你" : "等待對手");
 
   el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜目前${turnText}回合｜${myTurn}`;
 }
@@ -270,7 +271,7 @@ async function createOnlineRoom(){
   }
 }
 
-async function joinOnlineRoom(){
+async async function joinOnlineRoom(){
   try{
     initFirebaseOnline();
 
@@ -290,15 +291,18 @@ async function joinOnlineRoom(){
       return;
     }
 
-    const data = snap.val();
+    const data = snap.val() || {};
+    const players = data.players || {};
     let side = null;
 
-    if(data.players && data.players.red === online.playerId) side = "red";
-    else if(data.players && data.players.blue === online.playerId) side = "blue";
-    else if(!data.players || !data.players.red){
+    if(players.red === online.playerId){
+      side = "red";
+    }else if(players.blue === online.playerId){
+      side = "blue";
+    }else if(!players.red){
       side = "red";
       await ref.child("players/red").set(online.playerId);
-    }else if(!data.players.blue){
+    }else if(!players.blue){
       side = "blue";
       await ref.child("players/blue").set(online.playerId);
     }else{
