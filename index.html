@@ -1,5151 +1,2076 @@
-
-/* =========================================================
-   物原戰爭 — 幻想 RPG / 原神感 UI 重設計
-   重點：紅藍陣營保留、金色飾邊、深藍半透明面板、
-   元素感光效、卡牌質感、戰場氛圍、結束回合呼吸提示
-   ========================================================= */
-
-* {
-  box-sizing: border-box;
-}
-
-:root {
-  --bg-deep: #07101f;
-  --bg-mid: #101d35;
-  --ink: #edf6ff;
-  --muted: rgba(222, 236, 255, .74);
-
-  --gold: #f3d37a;
-  --gold-2: #b98a36;
-  --gold-3: #fff1b8;
-
-  --red: #ff5e70;
-  --red-deep: #9f1f35;
-  --red-soft: rgba(255, 94, 112, .22);
-
-  --blue: #63adff;
-  --blue-deep: #1f5cc7;
-  --blue-soft: rgba(99, 173, 255, .24);
-
-  --jade: #71f5d1;
-  --violet: #a886ff;
-  --amber: #ffc857;
-
-  --panel: rgba(12, 22, 43, .78);
-  --panel-2: rgba(20, 35, 62, .72);
-  --line: rgba(243, 211, 122, .34);
-}
-
-html,
-body {
-  margin: 0;
-  min-height: 100vh;
-}
-
-body {
-  color: var(--ink);
-  font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-  background:
-    radial-gradient(circle at 16% 18%, rgba(255, 94, 112, .18), transparent 26%),
-    radial-gradient(circle at 82% 16%, rgba(99, 173, 255, .20), transparent 28%),
-    radial-gradient(circle at 50% 82%, rgba(243, 211, 122, .12), transparent 34%),
-    linear-gradient(180deg, #081327 0%, #0b1427 45%, #040813 100%);
-  overflow-x: hidden;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(120deg, transparent 0 35%, rgba(255,255,255,.035) 46%, transparent 58%),
-    radial-gradient(circle at 50% 0%, rgba(255,255,255,.08), transparent 42%);
-  mix-blend-mode: screen;
-}
-
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(circle, black 0%, transparent 78%);
-}
-
-button {
-  font-family: inherit;
-}
-
-#game {
-  width: min(1500px, 96vw);
-  margin: 0 auto;
-  padding: 24px 16px 42px;
-  user-select: none;
-  position: relative;
-}
-
-#game::before {
-  content: "物原戰爭";
-  display: block;
-  width: fit-content;
-  margin: 0 auto 14px;
-  padding: 8px 34px;
-  color: var(--gold-3);
-  font-size: 34px;
-  font-weight: 1000;
-  letter-spacing: .24em;
-  text-indent: .24em;
-  text-shadow:
-    0 0 10px rgba(243, 211, 122, .55),
-    0 4px 22px rgba(0,0,0,.65);
-  border-top: 1px solid rgba(243,211,122,.55);
-  border-bottom: 1px solid rgba(243,211,122,.55);
-  background:
-    linear-gradient(90deg, transparent, rgba(243,211,122,.10), transparent);
-}
-
-/* ---------- 上方控制列 ---------- */
-
-.topBar {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.turnLabel,
-#endTurnBtn,
-.restartBtn {
-  border: 1px solid var(--line);
-  border-radius: 0;
-  padding: 13px 38px;
-  font-size: 20px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  color: white;
-  position: relative;
-  overflow: visible;
-  clip-path: polygon(
-    16px 0,
-    calc(100% - 16px) 0,
-    100% 16px,
-    100% calc(100% - 16px),
-    calc(100% - 16px) 100%,
-    16px 100%,
-    0 calc(100% - 16px),
-    0 16px
-  );
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.08),
-    inset 0 0 24px rgba(255,255,255,.05),
-    0 12px 30px rgba(0,0,0,.38);
-}
-
-.turnLabel::before,
-#endTurnBtn::before,
-.restartBtn::before {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(255, 241, 184, .26);
-  pointer-events: none;
-  clip-path: inherit;
-}
-
-.redTurn {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.16), transparent 26%),
-    linear-gradient(135deg, #ff7585, #b3203a 72%, #681528);
-  text-shadow: 0 0 14px rgba(255, 94, 112, .8);
-}
-
-.blueTurn {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.16), transparent 26%),
-    linear-gradient(135deg, #76c1ff, #245fc9 72%, #10316c);
-  text-shadow: 0 0 14px rgba(99, 173, 255, .8);
-}
-
-#endTurnBtn {
-  cursor: pointer;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.25), transparent 28%),
-    linear-gradient(135deg, #fff1a8, #f1b53a 58%, #9b5b16);
-  color: #382000;
-  text-shadow: 0 1px 0 rgba(255,255,255,.45);
-}
-
-#endTurnBtn:hover,
-.restartBtn:hover {
-  filter: brightness(1.12);
-  transform: translateY(-2px);
-}
-
-/* ---------- 圖例 ---------- */
-
-.legend {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  margin-bottom: 22px;
-  font-size: 14px;
-  font-weight: 900;
-  flex-wrap: wrap;
-  color: var(--muted);
-}
-
-.legend span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 12px;
-  background: rgba(8, 16, 31, .58);
-  border: 1px solid rgba(243, 211, 122, .18);
-  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
-}
-
-.legend i {
-  width: 15px;
-  height: 15px;
-  display: inline-block;
-  border-radius: 0;
-}
-
-.moveBox { background: #ffe77a; border: 2px solid #ffb703; }
-.attackBox { background: #ff9aa7; border: 2px solid #ff4e5f; }
-.placeBox { background: #99ffc0; border: 2px solid #20d978; }
-.shieldBox { background: #56f7ff; border: 2px solid #4aa3ff; }
-
-/* ---------- 主戰場 ---------- */
-
-.battleField {
-  display: grid;
-  grid-template-columns: 1fr 108px 1fr;
-  gap: 38px;
-  align-items: start;
-}
-
-.sidePanel {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 18px 16px 22px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015)),
-    var(--panel);
-  border: 1px solid rgba(243, 211, 122, .24);
-  clip-path: polygon(
-    22px 0,
-    calc(100% - 22px) 0,
-    100% 22px,
-    100% calc(100% - 22px),
-    calc(100% - 22px) 100%,
-    22px 100%,
-    0 calc(100% - 22px),
-    0 22px
-  );
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.04),
-    0 24px 50px rgba(0,0,0,.30);
-}
-
-.sidePanel::before {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  border: 1px solid rgba(243, 211, 122, .16);
-  pointer-events: none;
-  clip-path: inherit;
-}
-
-.redPanel {
-  box-shadow:
-    0 0 44px rgba(255, 94, 112, .12),
-    0 24px 50px rgba(0,0,0,.30);
-}
-
-.bluePanel {
-  box-shadow:
-    0 0 44px rgba(99, 173, 255, .14),
-    0 24px 50px rgba(0,0,0,.30);
-}
-
-.sidePanel h2 {
-  margin: 0 0 14px;
-  font-size: 26px;
-  letter-spacing: .12em;
-  text-indent: .12em;
-  font-weight: 1000;
-  text-shadow: 0 0 18px currentColor;
-}
-
-.redPanel h2 {
-  color: #ff9aa6;
-}
-
-.bluePanel h2 {
-  color: #9ed1ff;
-}
-
-/* ---------- 棋盤 ---------- */
-
-.board {
-  display: grid;
-  grid-template-columns: repeat(5, 82px);
-  grid-template-rows: repeat(5, 82px);
-  gap: 8px;
-  padding: 16px;
-  position: relative;
-  background:
-    linear-gradient(145deg, rgba(255,255,255,.06), rgba(255,255,255,.01)),
-    rgba(6, 12, 25, .56);
-  border: 1px solid rgba(243, 211, 122, .25);
-  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
-  backdrop-filter: blur(12px);
-}
-
-.board::before {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  pointer-events: none;
-  border: 1px solid rgba(255, 241, 184, .12);
-  clip-path: inherit;
-}
-
-.redPanel .board {
-  box-shadow:
-    inset 0 0 42px rgba(255, 94, 112, .07),
-    0 0 36px rgba(255, 94, 112, .10);
-}
-
-.bluePanel .board {
-  box-shadow:
-    inset 0 0 42px rgba(99, 173, 255, .08),
-    0 0 36px rgba(99, 173, 255, .10);
-}
-
-.cell {
-  position: relative;
-  width: 82px;
-  height: 82px;
-  border-radius: 0;
-  cursor: pointer;
-  color: inherit;
-  border: 1px solid rgba(255,255,255,.10);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.018)),
-    rgba(16, 29, 53, .64);
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
-  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-}
-
-.cell::before {
-  content: "";
-  position: absolute;
-  inset: 7px;
-  border: 1px solid rgba(243,211,122,.10);
-  pointer-events: none;
-  clip-path: inherit;
-}
-
-.cell:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.13);
-  box-shadow: 0 0 18px rgba(243,211,122,.18);
-}
-
-.frontTag {
-  position: absolute;
-  right: 7px;
-  bottom: 5px;
-  font-size: 10px;
-  color: rgba(255,241,184,.34);
-  pointer-events: none;
-  font-weight: 900;
-  letter-spacing: .08em;
-}
-
-/* ---------- 棋子 ---------- */
-
-.piece {
-  position: absolute;
-  inset: 6px;
-  border-radius: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  font-weight: 1000;
-  overflow: visible !important;
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.20),
-    0 12px 22px rgba(0,0,0,.32);
-  transition: all .35s ease;
-}
-
-.piece::before {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(255,255,255,.20);
-  pointer-events: none;
-  clip-path: inherit;
-}
-
-.redPiece {
-  color: #5e1019;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255,255,255,.55), transparent 28%),
-    linear-gradient(135deg, #ffd6da, #ff6a77 54%, #d9364c);
-  border: 2px solid rgba(255, 228, 231, .80);
-}
-
-.bluePiece {
-  color: #10376a;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(255,255,255,.62), transparent 28%),
-    linear-gradient(135deg, #dceeff, #7bbcff 54%, #3f82e2);
-  border: 2px solid rgba(231, 244, 255, .86);
-}
-
-.pieceIcon {
-  font-size: 31px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.22));
-}
-
-.pieceName {
-  font-size: 15px;
-  letter-spacing: .05em;
-}
-
-/* ---------- 護盾 / 冷卻 ---------- */
-
-.shielded {
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.22),
-    0 0 18px rgba(113,245,209,.55),
-    0 12px 22px rgba(0,0,0,.32);
-}
-
-.shielded::after {
-  content: "";
-  position: absolute;
-  inset: -9px;
-  border: 3px solid rgba(113,245,209,.85);
-  box-shadow:
-    0 0 16px rgba(113,245,209,.9),
-    0 0 34px rgba(80,180,255,.55),
-    inset 0 0 18px rgba(113,245,209,.22);
-  pointer-events: none;
-  animation: shieldPulse 1.5s ease-in-out infinite;
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-}
-
-.shieldCount {
-  position: absolute;
-  left: -11px;
-  top: -11px;
-  min-width: 34px;
-  height: 25px;
-  padding: 0 7px;
-  background: linear-gradient(135deg, #afffee, #5bbdff);
-  color: #06234c;
-  border: 2px solid white;
-  font-size: 13px;
-  display: grid;
-  place-items: center;
-  z-index: 40;
-  box-shadow: 0 0 16px rgba(113,245,209,.75);
-}
-
-@keyframes shieldPulse {
-  0%, 100% { transform: scale(1); opacity: .72; }
-  50% { transform: scale(1.05); opacity: 1; }
-}
-
-.cooldown {
-  position: absolute !important;
-  top: -15px !important;
-  right: 50% !important;
-  transform: translateX(50%) !important;
-  min-width: 88px !important;
-  height: 26px !important;
-  padding: 0 12px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: linear-gradient(135deg, #a886ff, #34b7ff) !important;
-  color: white !important;
-  border: 1px solid rgba(255,255,255,.95) !important;
-  box-shadow: 0 0 18px rgba(168,134,255,.55) !important;
-  font-size: 12px !important;
-  font-weight: 1000 !important;
-  z-index: 50 !important;
-  white-space: nowrap !important;
-}
-
-.cooldown::before {
-  content: "⚡冷卻 " !important;
-  font-size: 11px !important;
-  margin-right: 2px !important;
-}
-
-.piece:has(.cooldown)::after {
-  content: "Zzz" !important;
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255,255,255,.82) !important;
-  background: rgba(15, 22, 45, 0.22) !important;
-  font-size: 30px !important;
-  font-style: italic;
-  font-weight: 1000;
-  letter-spacing: 1px;
-  z-index: 8;
-  pointer-events: none;
-  backdrop-filter: blur(1.5px);
-  animation: sleepFloat 2.2s ease-in-out infinite !important;
-}
-
-.piece:has(.cooldown) .pieceIcon,
-.piece:has(.cooldown) .pieceName {
-  opacity: .45;
-  transform: translateY(6px);
-}
-
-@keyframes sleepFloat {
-  0% { opacity: .15; transform: translateY(8px) scale(.92); }
-  50% { opacity: .85; transform: translateY(-4px) scale(1.06); }
-  100% { opacity: .08; transform: translateY(-14px) scale(1.16); }
-}
-
-/* ---------- 高亮格 ---------- */
-
-.selectedCell {
-  outline: 3px solid var(--gold-3);
-  outline-offset: -3px;
-  box-shadow:
-    0 0 22px rgba(255,241,184,.64),
-    inset 0 0 20px rgba(255,241,184,.18);
-}
-
-.moveCell,
-.chariotMoveCell {
-  background:
-    radial-gradient(circle, rgba(255,241,184,.34), rgba(255,202,80,.18)),
-    rgba(35, 36, 28, .72) !important;
-  border-color: rgba(255, 218, 98, .86) !important;
-  box-shadow: 0 0 22px rgba(255, 218, 98, .38);
-}
-
-.attackCell {
-  background:
-    radial-gradient(circle, rgba(255,119,132,.40), rgba(255,65,85,.18)),
-    rgba(50, 18, 24, .76) !important;
-  border-color: rgba(255, 88, 104, .92) !important;
-  box-shadow: 0 0 24px rgba(255, 88, 104, .42);
-}
-
-.placeCell {
-  background:
-    radial-gradient(circle, rgba(118,255,175,.32), rgba(38,217,120,.16)),
-    rgba(17, 42, 33, .72) !important;
-  border-color: rgba(97, 255, 162, .88) !important;
-  box-shadow: 0 0 22px rgba(97, 255, 162, .34);
-}
-
-.shieldTargetCell,
-.dragShieldCell {
-  background:
-    radial-gradient(circle, rgba(113,245,209,.38), rgba(80,180,255,.18)),
-    rgba(18, 44, 52, .74) !important;
-  border-color: rgba(113,245,209,.92) !important;
-  box-shadow:
-    0 0 24px rgba(113,245,209,.48),
-    inset 0 0 18px rgba(113,245,209,.18);
-}
-
-.dragPlaceTarget,
-.dragMoveTarget {
-  background:
-    radial-gradient(circle, rgba(255,241,184,.48), rgba(255,184,61,.24)),
-    rgba(50, 38, 18, .78) !important;
-  border-color: var(--gold-3) !important;
-  box-shadow:
-    0 0 28px rgba(255,241,184,.68),
-    inset 0 0 20px rgba(255,241,184,.22) !important;
-}
-
-.dragAttackTarget {
-  background:
-    radial-gradient(circle, rgba(255,120,136,.50), rgba(255,60,80,.25)),
-    rgba(58, 18, 24, .82) !important;
-  border-color: #ff6b7b !important;
-  box-shadow:
-    0 0 30px rgba(255, 90, 110, .68),
-    inset 0 0 20px rgba(255, 90, 110, .22) !important;
-}
-
-/* ---------- 核彈預覽 / 爆炸 ---------- */
-
-.dragNukeArea {
-  background:
-    radial-gradient(circle, rgba(255, 241, 118, .56), rgba(255, 115, 0, .42), rgba(255, 45, 0, .20)) !important;
-  border-color: rgba(255, 195, 74, .98) !important;
-  box-shadow:
-    0 0 22px rgba(255, 122, 0, .62),
-    inset 0 0 20px rgba(255, 210, 60, .32) !important;
-  animation: nukePreviewPulse .8s ease-in-out infinite alternate;
-}
-
-.dragNukeCenter {
-  outline: 4px solid rgba(255,255,255,.95) !important;
-  outline-offset: -4px;
-  transform: scale(1.04);
-  z-index: 15;
-}
-
-.dragNukeCenter::after {
-  content: "☢";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(255,255,255,.95);
-  font-size: 38px;
-  font-weight: 1000;
-  text-shadow: 0 0 18px rgba(255, 90, 0, .95);
-  pointer-events: none;
-  z-index: 20;
-}
-
-@keyframes nukePreviewPulse {
-  from { filter: brightness(1); transform: scale(1); }
-  to { filter: brightness(1.18); transform: scale(1.025); }
-}
-
-.nukeBlast {
-  position: relative !important;
-  overflow: visible !important;
-  animation: nukeScreenShake .25s linear 2;
-  z-index: 80;
-}
-
-.nukeBlast::before {
-  content: "☢" !important;
-  position: absolute !important;
-  inset: -8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 56px !important;
-  color: rgba(255,255,255,.95) !important;
-  z-index: 999 !important;
-  pointer-events: none !important;
-  animation: nukeSymbolPop 1.2s ease-out forwards !important;
-}
-
-.nukeBlast::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -42px !important;
-  border-radius: 50% !important;
-  background: radial-gradient(circle,
-    rgba(255,255,255,1) 0%,
-    rgba(255,240,140,.95) 18%,
-    rgba(255,160,0,.9) 38%,
-    rgba(255,80,0,.55) 58%,
-    rgba(255,40,0,.18) 72%,
-    transparent 100%) !important;
-  z-index: 998 !important;
-  pointer-events: none !important;
-  animation: nukeWaveExpand 1.2s ease-out forwards !important;
-}
-
-@keyframes nukeSymbolPop {
-  0% { opacity: 0; transform: scale(.2) rotate(-20deg); }
-  20% { opacity: 1; transform: scale(1.15) rotate(0deg); }
-  60% { opacity: .95; transform: scale(1.35); }
-  100% { opacity: 0; transform: scale(1.6); }
-}
-
-@keyframes nukeWaveExpand {
-  0% { opacity: 0; transform: scale(.15); }
-  15% { opacity: 1; transform: scale(.8); }
-  55% { opacity: .95; transform: scale(1.5); }
-  100% { opacity: 0; transform: scale(2.2); }
-}
-
-@keyframes nukeScreenShake {
-  0% { transform: translate(0,0); }
-  25% { transform: translate(2px,-2px); }
-  50% { transform: translate(-2px,2px); }
-  75% { transform: translate(2px,1px); }
-  100% { transform: translate(0,0); }
-}
-
-/* ---------- 河道 ---------- */
-
-.river {
-  height: 430px;
-  margin-top: 64px;
-  border: 1px solid rgba(120, 220, 255, .45);
-  background:
-    radial-gradient(circle at 50% 30%, rgba(145, 235, 255, .20), transparent 38%),
-    linear-gradient(180deg, rgba(68, 177, 255, .20), rgba(31, 91, 180, .12)),
-    rgba(12, 35, 70, .58);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: #9eefff;
-  font-size: 26px;
-  font-weight: 1000;
-  letter-spacing: .28em;
-  line-height: 1.5;
-  text-shadow: 0 0 18px #50d6ff;
-  box-shadow:
-    inset 0 0 50px rgba(84, 190, 255, .16),
-    0 0 30px rgba(84,190,255,.10);
-  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 22px 100%, 0 calc(100% - 22px), 0 22px);
-}
-
-/* ---------- 手牌 ---------- */
-
-.handTitle {
-  margin-top: 20px;
-  font-size: 17px;
-  font-weight: 1000;
-  color: var(--gold-3);
-  letter-spacing: .08em;
-  text-shadow: 0 0 12px rgba(243,211,122,.35);
-}
-
-.hand {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  min-height: 158px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.card {
-  width: 122px;
-  height: 154px;
-  border-radius: 0;
-  padding: 13px 10px;
-  cursor: pointer;
-  color: #edf6ff;
-  background:
-    radial-gradient(circle at 50% 12%, rgba(255,241,184,.16), transparent 32%),
-    linear-gradient(180deg, #172641, #0b1426 70%, #07101e);
-  border: 1px solid rgba(243, 211, 122, .32);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    0 14px 30px rgba(0,0,0,.30);
-  position: relative;
-}
-
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 6px;
-  border: 1px solid rgba(255,241,184,.15);
-  pointer-events: none;
-  clip-path: inherit;
-}
-
-.card::after {
-  content: "";
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 8px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(243,211,122,.70), transparent);
-  pointer-events: none;
-}
-
-.card[draggable="true"] {
-  cursor: grab !important;
-}
-
-.card[draggable="true"]:active {
-  cursor: grabbing !important;
-}
-
-.redCard {
-  border-color: rgba(255, 94, 112, .48);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    0 0 20px rgba(255,94,112,.08),
-    0 14px 30px rgba(0,0,0,.30);
-}
-
-.blueCard {
-  border-color: rgba(99, 173, 255, .50);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.05),
-    0 0 20px rgba(99,173,255,.09),
-    0 14px 30px rgba(0,0,0,.30);
-}
-
-.card:hover:not(.disabledCard) {
-  transform: translateY(-9px);
-  filter: brightness(1.17);
-  box-shadow:
-    0 0 24px rgba(243,211,122,.22),
-    0 20px 34px rgba(0,0,0,.36);
-}
-
-.selectedCard {
-  transform: translateY(-10px);
-  border-color: var(--gold-3) !important;
-  box-shadow:
-    0 0 22px rgba(255,241,184,.55),
-    0 0 42px rgba(243,211,122,.22),
-    0 20px 34px rgba(0,0,0,.36);
-}
-
-.disabledCard {
-  opacity: .42;
-  cursor: default;
-  filter: grayscale(.2);
-}
-
-.cardIcon {
-  font-size: 42px;
-  line-height: 1;
-  font-weight: 1000;
-  color: var(--gold-3);
-  text-shadow: 0 0 16px rgba(243,211,122,.38);
-}
-
-.card strong {
-  font-size: 18px;
-  letter-spacing: .06em;
-}
-
-.card small {
-  color: rgba(237, 245, 255, .76);
-  line-height: 1.35;
-  font-size: 12px;
-}
-
-/* ---------- Log / 規則 ---------- */
-
-.log {
-  margin: 24px auto 0;
-  text-align: center;
-  min-height: 38px;
-  width: min(840px, 92vw);
-  padding: 9px 20px;
-  font-size: 21px;
-  font-weight: 1000;
-  color: #fff8d7;
-  text-shadow: 0 0 14px rgba(243,211,122,.48);
-  background:
-    linear-gradient(90deg, transparent, rgba(243,211,122,.10), transparent),
-    rgba(8, 16, 31, .48);
-  border-top: 1px solid rgba(243,211,122,.25);
-  border-bottom: 1px solid rgba(243,211,122,.25);
-}
-
-.rules {
-  width: min(960px, 92vw);
-  margin: 18px auto 0;
-  padding: 18px 22px;
-  border-radius: 0;
-  border: 1px solid rgba(243, 211, 122, .22);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.015)),
-    rgba(10, 19, 42, .78);
-  color: #dce9ff;
-  font-size: 15px;
-  line-height: 1.8;
-  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
-  box-shadow: 0 18px 34px rgba(0,0,0,.24);
-}
-
-.rules b {
-  color: var(--gold-3);
-}
-
-.restartBtn {
-  display: block;
-  margin: 18px auto 0;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.20), transparent 30%),
-    linear-gradient(135deg, #a886ff, #28c4ff);
-  cursor: pointer;
-}
-
-/* ---------- 車提示 ---------- */
-
-.chariotPiece .pieceIcon {
-  font-size: 26px;
-  letter-spacing: .02em;
-}
-
-.chariotPiece {
-  border-style: double;
-}
-
-.chariotMoveCell::after {
-  content: attr(data-moves-left);
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, #fff1b8, #ffb703);
-  color: #4d2b00;
-  border: 2px solid rgba(255,255,255,.9);
-  font-size: 15px;
-  font-weight: 1000;
-  z-index: 5;
-  box-shadow: 0 0 16px rgba(255, 211, 61, .75);
-}
-
-.chariotMoveCell::before {
-  content: "可移動";
-  position: absolute;
-  right: 5px;
-  top: 7px;
-  font-size: 10px;
-  font-weight: 900;
-  color: rgba(255,241,184,.86);
-  z-index: 5;
-}
-
-/* ---------- 結束回合提示：呼吸 + 發光 + 淡出 ---------- */
-
-#endTurnBtn {
-  transition:
-    transform .45s ease,
-    box-shadow .45s ease,
-    filter .45s ease,
-    background .45s ease,
-    opacity .45s ease;
-}
-
-#endTurnBtn.turnAlert {
-  position: relative;
-  isolation: isolate;
-  animation:
-    endTurnBreath 1.45s ease-in-out infinite,
-    endTurnGlow 1.45s ease-in-out infinite;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.30), transparent 28%),
-    linear-gradient(135deg, #fff1a8, #ffc247 58%, #ff6b3d) !important;
-  color: #321700 !important;
-  border: 1px solid rgba(255,255,255,.95) !important;
-  text-shadow: 0 1px 0 rgba(255,255,255,.35);
-}
-
-#endTurnBtn.turnAlert::after {
-  content: "✨";
-  position: absolute;
-  right: -18px;
-  top: -14px;
-  font-size: 24px;
-  animation: endTurnSpark 1.1s ease-in-out infinite;
-  pointer-events: none;
-}
-
-#endTurnBtn:not(.turnAlert)::after {
-  opacity: 0 !important;
-  transform: scale(.6) rotate(-20deg) !important;
-  transition: opacity .45s ease, transform .45s ease;
-}
-
-@keyframes endTurnBreath {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-4px) scale(1.07); }
-}
-
-@keyframes endTurnGlow {
-  0%, 100% {
-    box-shadow:
-      0 0 14px rgba(255, 230, 109, .55),
-      0 0 34px rgba(255, 159, 28, .38),
-      0 10px 30px rgba(0,0,0,.35);
-    filter: brightness(1.04);
-  }
-  50% {
-    box-shadow:
-      0 0 24px rgba(255, 245, 150, .9),
-      0 0 58px rgba(255, 145, 0, .72),
-      0 0 90px rgba(255, 80, 40, .38),
-      0 16px 36px rgba(0,0,0,.42);
-    filter: brightness(1.2);
-  }
-}
-
-@keyframes endTurnSpark {
-  0%, 100% { opacity: .55; transform: rotate(-12deg) scale(.9); }
-  50% { opacity: 1; transform: rotate(10deg) scale(1.22); }
-}
-
-/* ---------- Responsive ---------- */
-
-@media (max-width: 1080px) {
-  .battleField {
-    grid-template-columns: 1fr;
-    gap: 28px;
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物原戰爭</title>
+  <link rel="stylesheet" href="物原戰爭.css" />
+</head>
+<body>
+  <main id="game">
+    <section class="topBar">
+      <div id="turnLabel" class="turnLabel redTurn">紅方回合</div>
+    </section>
+
+    <section class="onlinePanel">
+      <div class="onlineTitle">線上對戰</div>
+      <div class="onlineControls">
+        <button id="createRoomBtn" type="button">建立房間</button>
+        <input id="roomCodeInput" type="text" maxlength="6" placeholder="輸入房間碼" />
+        <button id="joinRoomBtn" type="button">加入房間</button>
+        <button id="leaveRoomBtn" type="button">離開房間</button>
+      </div>
+      <div id="onlineStatus" class="onlineStatus">目前是單機模式</div>
+    </section>
+<section class="legend">
+      <span><i class="moveBox"></i>可移動格</span>
+      <span><i class="attackBox"></i>可攻擊目標</span>
+      <span><i class="placeBox"></i>可放置格</span>
+      <span><i class="shieldBox"></i>可套盾</span>
+    </section>
+
+    <section class="battleField">
+      <section class="sidePanel redPanel">
+        <h2>紅方陣地</h2>
+        <div id="redBoard" class="board"></div>
+        <div class="handTitle" id="redHandTitle">手牌</div>
+        <div id="redHand" class="hand"></div>
+        <div class="skillZone redSkillZone" id="redSkillZone">
+          <div class="skillZoneHeader">
+            <div class="skillZoneTitle">紅方技能</div>
+            <div id="skillChargeText-red" class="skillChargeText">技能能量：0 / 2</div>
+          </div>
+          <div class="skillSpinRow">
+            <div class="skillWheelWrap">
+              <div class="skillWheelPointer"></div>
+              <div id="skillWheel-red" class="skillWheel">
+                <div class="skillWheelCenter">20%</div>
+              </div>
+            </div>
+            <div class="skillSpinControls">
+              <button id="spinSkillBtn-red" class="spinSkillBtn" data-side="red" type="button">紅方轉盤</button>
+              <div id="skillSpinResult-red" class="skillSpinResult">尚未抽取</div>
+            </div>
+          </div>
+          <div id="skillHand-red" class="skillHand sideSkillHand"></div>
+        </div>
+
+      </section>
+
+      <section class="river">
+        <span>戰</span>
+        <span>線</span>
+      </section>
+
+      <section class="sidePanel bluePanel">
+        <h2>藍方陣地</h2>
+        <div id="blueBoard" class="board"></div>
+        <div class="handTitle" id="blueHandTitle">手牌</div>
+        <div id="blueHand" class="hand"></div>
+        <div class="skillZone blueSkillZone" id="blueSkillZone">
+          <div class="skillZoneHeader">
+            <div class="skillZoneTitle">藍方技能</div>
+            <div id="skillChargeText-blue" class="skillChargeText">技能能量：0 / 2</div>
+          </div>
+          <div class="skillSpinRow">
+            <div class="skillWheelWrap">
+              <div class="skillWheelPointer"></div>
+              <div id="skillWheel-blue" class="skillWheel">
+                <div class="skillWheelCenter">20%</div>
+              </div>
+            </div>
+            <div class="skillSpinControls">
+              <button id="spinSkillBtn-blue" class="spinSkillBtn" data-side="blue" type="button">藍方轉盤</button>
+              <div id="skillSpinResult-blue" class="skillSpinResult">尚未抽取</div>
+            </div>
+          </div>
+          <div id="skillHand-blue" class="skillHand sideSkillHand"></div>
+        </div>
+
+      </section>
+    </section>
+
+    
+    <section class="bottomActionBar">
+      <button id="endTurnBtn" class="bottomEndTurnBtn">結束回合</button>
+    </section>
+
+    <section id="log" class="log">歡迎！紅方先手。可單機遊玩，也可建立房間線上對戰。</section>
+
+    <section class="rules">
+      <div class="rulesBlock">
+        <div class="rulesTitle">⚔️ 棋子規則</div>
+        <div class="rulesRow"><span class="rulesIcon">↗</span><span><b>劍</b>：只能往敵方方向前進一格；到前線後可跨河；跨河後可往敵方底線方向、上、下各一格。劍走到敵方底線獲勝。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">➹</span><span><b>弓箭</b>：射同一橫列的「第一個敵人」，會跳過自己人；敵人有護盾會先消耗 1 層護盾。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">車</span><span><b>車</b>：一回合可移動兩次，每次一格（前後上下），不能斜走；可踏過戰線殺死敵方棋子；走完兩次後充能 3 回合；遇到自己人不能走，遇到敵方陷阱不能走，自己陷阱不影響。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">⬟</span><span><b>盾</b>：附身在棋子身上，可疊加；數字代表可擋幾次傷害。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">☢</span><span><b>核彈</b>：指定一格為中心，摧毀 3x3 範圍；有護盾先扣盾，沒盾直接消失。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">✦</span><span><b>陷阱</b>：每位玩家整局只有 1 張；拖曳指定一格後設置上中下 3 格；只會擋車，其他棋子當作不存在。</span></div>
+      </div>
+      <div class="rulesBlock">
+        <div class="rulesTitle">✨ 技能系統</div>
+        <div class="rulesRow"><span class="rulesIcon">🔋</span><span><b>充能</b>：每位玩家累積 2 次自己的回合後，可轉一次 20% 技能輪盤。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">❄️</span><span><b>凍結</b>：施放後，敵方下一回合直接跳過。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">💥</span><span><b>爆裂弓</b>：施放後，下一次弓箭攻擊可射任意敵方棋子，不限同列。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">🃏</span><span>技能牌不佔手牌格，獨立存放於技能區。</span></div>
+      </div>
+    </section>
+  </main>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  Supabase 聯機同步層
+//  原理：用 Supabase Realtime Broadcast 傳 JSON 字串
+//        JSON.stringify 保留陣列格式，不會被資料庫破壞
+// ═══════════════════════════════════════════════════════
+
+const SUPABASE_URL = "https://hoglrqbfgsfucgeuueol.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rF2UgXFQw1aZNS7FgUFsCg_B0gGR2EB";
+
+let sbClient = null;
+let sbChannel = null;
+
+let online = {
+  enabled: false,
+  roomCode: null,
+  playerSide: null,
+  playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
+  isApplyingRemote: false
+};
+
+function initSupabase(){
+  if(sbClient) return;
+  sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+function makeRoomCode(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for(let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// ── 取得要同步的遊戲狀態（JSON 安全，保留陣列） ──
+function getPublicState(){
+  return {
+    turn: state.turn,
+    boards: state.boards,
+    hands: state.hands,
+    traps: state.traps || { red: [], blue: [] },
+    trapCardGiven: state.trapCardGiven || { red: false, blue: false },
+    skillCards: state.skillCards || { red: [], blue: [] },
+    skillCharge: state.skillCharge || { red: 0, blue: 0 },
+    freezeNext: state.freezeNext || { red: false, blue: false },
+    burstBowReady: state.burstBowReady || { red: false, blue: false },
+    skillSpinUi: state.skillSpinUi || { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } },
+    actionDone: state.actionDone,
+    gameOver: state.gameOver,
+    logText: document.getElementById("log") ? document.getElementById("log").textContent : ""
+  };
+}
+
+// ── 套用對手的狀態 ──
+function applyPublicState(remoteState){
+  if(!remoteState) return;
+  online.isApplyingRemote = true;
+
+  state = {
+    ...state,
+    ...remoteState,
+    selectedPiece: null,
+    selectedCard: null,
+    draggingCard: null,
+    draggingPiece: null,
+    dragPreviewSide: null,
+    dragPreviewIdx: null,
+    dropHandled: false
+  };
+
+  if(!state.traps) state.traps = { red: [], blue: [] };
+  if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
+  ensureSkillState();
+  render();
+
+  if(remoteState.logText){
+    const logEl = document.getElementById("log");
+    if(logEl) logEl.textContent = remoteState.logText;
   }
 
-  .river {
-    width: min(430px, 90vw);
-    height: 70px;
-    flex-direction: row;
-    margin: 0 auto;
-  }
+  updateOnlineStatus();
+  online.isApplyingRemote = false;
 }
 
-@media (max-width: 560px) {
-  #game::before {
-    font-size: 26px;
-  }
+// ── 推送狀態給對手 ──
+function syncPushGameState(reason = "update"){
+  if(!online.enabled || !sbChannel || online.isApplyingRemote) return Promise.resolve();
 
-  .board {
-    grid-template-columns: repeat(5, 58px);
-    grid-template-rows: repeat(5, 58px);
-    gap: 5px;
-    padding: 10px;
-  }
+  const payload = {
+    type: "gameState",
+    from: online.playerId,
+    state: getPublicState(),
+    reason
+  };
 
-  .cell {
-    width: 58px;
-    height: 58px;
-  }
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: payload
+  });
 
-  .piece {
-    inset: 5px;
-  }
-
-  .pieceIcon {
-    font-size: 23px;
-  }
-
-  .pieceName {
-    font-size: 12px;
-  }
-
-  .topBar {
-    flex-direction: column;
-  }
-
-  .card {
-    width: 108px;
-    height: 144px;
-  }
+  return Promise.resolve();
 }
 
-
-/* =========================================================
-   素材資料夾版棋子/卡牌
-   REDsword.png, REDbow.png, REDchariot.png, REDshield.png
-   BLUEsword.png, BLUEbow.png, BLUEchariot.png, BLUEshield.png
-   nuke.png 放在 HTML 同層
-   找不到圖片時會自動顯示原本符號
-   ========================================================= */
-
-.piece {
-  gap: 0;
+function renderAndSync(reason = "update"){
+  render();
+  return syncPushGameState(reason);
 }
 
-.pieceArtWrap {
-  position: relative;
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 1px;
-  z-index: 2;
+function canUseOnlineTurn(){
+  if(!online.enabled) return true;
+  if(!online.playerSide || online.playerSide === "spectator") return false;
+  return online.playerSide === state.turn;
 }
 
-.pieceArt {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  filter:
-    drop-shadow(0 4px 5px rgba(0,0,0,.28))
-    drop-shadow(0 0 8px rgba(255,255,255,.14));
-}
+function updateOnlineStatus(message){
+  const el = document.getElementById("onlineStatus");
+  if(!el) return;
 
-.pieceIconFallback {
-  width: 52px;
-  height: 52px;
-  display: none;
-  place-items: center;
-  font-size: 32px;
-  line-height: 1;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.22));
-}
-
-.cardArtWrap {
-  position: relative;
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 3px;
-  z-index: 2;
-}
-
-.cardArt {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.34))
-    drop-shadow(0 0 10px rgba(243,211,122,.18));
-}
-
-.cardIconFallback {
-  width: 62px;
-  height: 62px;
-  display: none;
-  place-items: center;
-  font-size: 42px;
-  line-height: 1;
-  font-weight: 1000;
-  color: var(--gold-3);
-  text-shadow: 0 0 16px rgba(243,211,122,.38);
-}
-
-.pieceName {
-  position: relative;
-  z-index: 3;
-  padding: 1px 6px;
-  background: rgba(0,0,0,.16);
-  border: 1px solid rgba(255,255,255,.14);
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-.card strong {
-  position: relative;
-  z-index: 3;
-  margin-top: 1px;
-}
-
-.card small {
-  position: relative;
-  z-index: 3;
-}
-
-.redPiece .pieceArt {
-  filter:
-    drop-shadow(0 4px 5px rgba(0,0,0,.28))
-    drop-shadow(0 0 10px rgba(255,94,112,.32));
-}
-
-.bluePiece .pieceArt {
-  filter:
-    drop-shadow(0 4px 5px rgba(0,0,0,.28))
-    drop-shadow(0 0 10px rgba(99,173,255,.34));
-}
-
-.redCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.34))
-    drop-shadow(0 0 12px rgba(255,94,112,.26));
-}
-
-.blueCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.34))
-    drop-shadow(0 0 12px rgba(99,173,255,.28));
-}
-
-/* 冷卻狀態：拿掉粗糙 Zzz，改成鎖定/暗化感 */
-.piece:has(.cooldown)::after {
-  content: "" !important;
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.05), transparent 35%),
-    rgba(5, 10, 22, .46) !important;
-  z-index: 8;
-  pointer-events: none;
-  backdrop-filter: grayscale(.6) blur(.6px);
-  animation: none !important;
-  clip-path: inherit;
-}
-
-.piece:has(.cooldown)::before {
-  opacity: .45;
-}
-
-.piece:has(.cooldown) .pieceArt,
-.piece:has(.cooldown) .pieceIconFallback,
-.piece:has(.cooldown) .pieceName {
-  opacity: .42;
-  transform: none;
-  filter: grayscale(.75) brightness(.72);
-}
-
-.piece:has(.cooldown) .pieceArtWrap::after {
-  content: "LOCK";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  translate: -50% -50%;
-  padding: 3px 7px;
-  font-size: 10px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(168,134,255,.92), rgba(52,183,255,.86));
-  border: 1px solid rgba(255,255,255,.8);
-  box-shadow: 0 0 14px rgba(99,173,255,.5);
-  z-index: 12;
-}
-
-.cooldown {
-  z-index: 30 !important;
-}
-
-/* 護盾狀態：更直觀 */
-.shielded .pieceArtWrap::before {
-  content: "";
-  position: absolute;
-  inset: -7px;
-  border: 2px solid rgba(113,245,209,.85);
-  box-shadow:
-    0 0 12px rgba(113,245,209,.9),
-    inset 0 0 12px rgba(113,245,209,.22);
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
-  animation: shieldPulse 1.5s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@media (max-width: 560px) {
-  .pieceArtWrap,
-  .pieceIconFallback {
-    width: 38px;
-    height: 38px;
+  if(!online.enabled){
+    el.textContent = message || "目前是單機模式";
+    return;
   }
 
-  .pieceIconFallback {
-    font-size: 25px;
+  const sideText = online.playerSide === "red" ? "紅方" : online.playerSide === "blue" ? "藍方" : "觀戰";
+  const turnText = state.turn === "red" ? "紅方" : "藍方";
+  const myTurn = online.playerSide === "spectator" ? "觀戰中，不能操作" :
+                 (online.playerSide === state.turn ? "✅ 輪到你" : "⏳ 等待對手");
+
+  el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜${myTurn}`;
+}
+
+// ── 建立房間（紅方） ──
+async function createOnlineRoom(){
+  initSupabase();
+  const code = makeRoomCode();
+
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
+
+  state = createInitialState ? createInitialState() : state;
+  state.turn = "red";
+  state.actionDone = false;
+  state.gameOver = false;
+
+  online.enabled = true;
+  online.roomCode = code;
+  online.playerSide = "red";
+  online.isApplyingRemote = false;
+
+  const input = document.getElementById("roomCodeInput");
+  if(input) input.value = code;
+
+  // 建立 Supabase Realtime 頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }  // self:false = 自己送的不收到
+  });
+
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "join"){
+      // 藍方加入，推送完整狀態給他
+      updateOnlineStatus();
+      render();
+      setTimeout(() => syncPushGameState("welcome"), 200);
+      setLog("藍方已加入！紅方回合開始。");
+    } else if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
+  });
+
+  await sbChannel.subscribe();
+
+  updateOnlineStatus(`房間建立！房間碼：${code}，等待對手加入...`);
+  render();
+}
+
+// ── 加入房間（藍方） ──
+async function joinOnlineRoom(){
+  initSupabase();
+
+  const input = document.getElementById("roomCodeInput");
+  const code = (input && input.value ? input.value : "").trim().toUpperCase();
+
+  if(!code){ updateOnlineStatus("請先輸入房間碼。"); return; }
+
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
+
+  online.enabled = true;
+  online.roomCode = code;
+  online.playerSide = "blue";
+  online.isApplyingRemote = false;
+
+  // 建立頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }
+  });
+
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
+  });
+
+  await sbChannel.subscribe();
+
+  // 通知紅方自己加入了
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: { type: "join", from: online.playerId }
+  });
+
+  updateOnlineStatus(`已加入房間 ${code}，等待紅方同步狀態...`);
+  render();
+}
+
+// ── 離開房間 ──
+async function leaveOnlineRoom(){
+  if(sbChannel){
+    sbChannel.send({
+      type: "broadcast",
+      event: "game",
+      payload: { type: "leave", from: online.playerId }
+    });
+    await sbClient.removeChannel(sbChannel);
+    sbChannel = null;
   }
 
-  .cardArtWrap,
-  .cardIconFallback {
-    width: 54px;
-    height: 54px;
-  }
+  online.enabled = false;
+  online.roomCode = null;
+  online.playerSide = null;
+
+  updateOnlineStatus("已離開房間，目前是單機模式。");
+  render();
+}
+function setupOnlineButtons(){
+  const createBtn = document.getElementById("createRoomBtn");
+  const joinBtn = document.getElementById("joinRoomBtn");
+  const leaveBtn = document.getElementById("leaveRoomBtn");
+
+  if(createBtn) createBtn.addEventListener("click", createOnlineRoom);
+  if(joinBtn) joinBtn.addEventListener("click", joinOnlineRoom);
+  if(leaveBtn) leaveBtn.addEventListener("click", leaveOnlineRoom);
+  document.querySelectorAll(".spinSkillBtn").forEach(btn => {
+    btn.addEventListener("click", () => spinSkillWheel(btn.dataset.side));
+  });
+
+  updateOnlineStatus();
 }
 
+const SWORD = "sword";
+const SHIELD = "shield";
+const BOW = "bow";
+const CHARIOT = "chariot";
+const NUKE = "nuke";
+const TRAP = "trap";
 
-/* ===== 圖片素材顯示修正版：棋子與手牌都會吃 PNG ===== */
-.pieceArtWrap,
-.cardArtWrap {
-  position: relative;
-  display: grid;
-  place-items: center;
-  z-index: 5;
-}
+const ICONS = { sword: "↗", shield: "⬟", bow: "➹", chariot: "車", nuke: "☢", trap: "✦" };
+const CARD_NAMES = { sword: "劍", shield: "盾", bow: "弓箭", chariot: "車", nuke: "核彈", trap: "陷阱" };
 
-.pieceArtWrap {
-  width: 54px;
-  height: 54px;
-}
 
-.cardArtWrap {
-  width: 68px;
-  height: 68px;
-  margin-bottom: 4px;
-}
 
-.pieceArt,
-.cardArt {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  pointer-events: none;
-  user-select: none;
-}
 
-.pieceArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.35))
-    drop-shadow(0 0 8px rgba(255,255,255,.18));
-}
 
-.cardArt {
-  filter:
-    drop-shadow(0 6px 7px rgba(0,0,0,.38))
-    drop-shadow(0 0 12px rgba(243,211,122,.20));
-}
 
-.pieceIconFallback,
-.cardIconFallback {
-  display: none;
-  place-items: center;
-  line-height: 1;
-  font-weight: 1000;
-}
 
-.pieceIconFallback {
-  width: 54px;
-  height: 54px;
-  font-size: 32px;
-}
 
-.cardIconFallback {
-  width: 68px;
-  height: 68px;
-  font-size: 42px;
-  color: var(--gold-3);
-  text-shadow: 0 0 16px rgba(243,211,122,.38);
-}
+function assetFor(owner, type){
+  if(type === NUKE) return "nuke.png";
+  if(type === TRAP) return "trap.png";
 
-.pieceName {
-  z-index: 6;
-}
-
-.redPiece .pieceArt,
-.redCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.35))
-    drop-shadow(0 0 12px rgba(255,94,112,.35));
-}
-
-.bluePiece .pieceArt,
-.blueCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.35))
-    drop-shadow(0 0 12px rgba(99,173,255,.36));
-}
-
-.piece:has(.cooldown) .pieceArt,
-.piece:has(.cooldown) .pieceIconFallback {
-  opacity: .42;
-  filter: grayscale(.75) brightness(.72);
-}
-
-@media (max-width: 560px) {
-  .pieceArtWrap,
-  .pieceIconFallback {
-    width: 40px;
-    height: 40px;
+  // 素材全部放在 HTML 同一層，不使用 RED/BLUE 資料夾
+  if(owner === "red"){
+    if(type === SWORD) return "REDsword.png";
+    if(type === BOW) return "REDbow.png";
+    if(type === CHARIOT) return "REDchariot.png";
+    if(type === SHIELD) return "REDshield.png";
   }
 
-  .cardArtWrap,
-  .cardIconFallback {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-
-/* =========================================================
-   最終素材渲染版：真的使用 RED / BLUE 資料夾圖片
-   路徑：
-   RED/REDsword.png
-   RED/REDbow.png
-   RED/REDchariot.png
-   RED/REDshield.png
-
-   BLUE/BLUEsword.png
-   BLUE/BLUEbow.png
-   BLUE/BLUEchariot.png
-   BLUE/BLUEshield.png
-
-   nuke.png
-   ========================================================= */
-
-.pieceArtWrap,
-.cardArtWrap {
-  position: relative !important;
-  display: grid !important;
-  place-items: center !important;
-  z-index: 10 !important;
-  pointer-events: none !important;
-}
-
-.pieceArtWrap {
-  width: 54px !important;
-  height: 54px !important;
-  margin-bottom: 1px !important;
-}
-
-.cardArtWrap {
-  width: 70px !important;
-  height: 70px !important;
-  margin-bottom: 4px !important;
-}
-
-.pieceArt,
-.cardArt {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  pointer-events: none !important;
-  user-select: none !important;
-}
-
-.pieceArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.38))
-    drop-shadow(0 0 10px rgba(255,255,255,.16)) !important;
-}
-
-.cardArt {
-  filter:
-    drop-shadow(0 6px 8px rgba(0,0,0,.42))
-    drop-shadow(0 0 12px rgba(243,211,122,.22)) !important;
-}
-
-.pieceArtFallback,
-.cardArtFallback {
-  display: none !important;
-  place-items: center !important;
-  width: 100% !important;
-  height: 100% !important;
-  line-height: 1 !important;
-  font-weight: 1000 !important;
-}
-
-.assetMissing .pieceArtFallback,
-.assetMissing .cardArtFallback {
-  display: grid !important;
-}
-
-.pieceArtFallback {
-  font-size: 32px !important;
-}
-
-.cardArtFallback {
-  font-size: 42px !important;
-  color: var(--gold-3) !important;
-  text-shadow: 0 0 16px rgba(243,211,122,.38) !important;
-}
-
-.redPiece .pieceArt,
-.redCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.38))
-    drop-shadow(0 0 13px rgba(255,94,112,.38)) !important;
-}
-
-.bluePiece .pieceArt,
-.blueCard .cardArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.38))
-    drop-shadow(0 0 13px rgba(99,173,255,.40)) !important;
-}
-
-.pieceIcon,
-.cardIcon {
-  display: none !important;
-}
-
-.pieceName {
-  position: relative !important;
-  z-index: 12 !important;
-  padding: 1px 6px !important;
-  background: rgba(0,0,0,.18) !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-  font-size: 12px !important;
-  line-height: 1.25 !important;
-}
-
-.piece:has(.cooldown) .pieceArt,
-.piece:has(.cooldown) .pieceArtFallback {
-  opacity: .42 !important;
-  filter: grayscale(.78) brightness(.72) !important;
-}
-
-@media (max-width: 560px) {
-  .pieceArtWrap {
-    width: 40px !important;
-    height: 40px !important;
+  if(owner === "blue"){
+    if(type === SWORD) return "BLUEsword.png";
+    if(type === BOW) return "BLUEbow.png";
+    if(type === CHARIOT) return "BLUEchariot.png";
+    if(type === SHIELD) return "BLUEshield.png";
   }
 
-  .cardArtWrap {
-    width: 56px !important;
-    height: 56px !important;
+  return "";
+}
+
+function makeAssetImg(src, className, fallbackText){
+  return `
+    <span class="${className}Wrap">
+      <img class="${className}" src="${src}" draggable="false" alt=""
+        onerror="this.remove(); this.parentElement.classList.add('assetMissing');">
+      <span class="${className}Fallback">${fallbackText}</span>
+    </span>
+  `;
+}
+
+function pieceVisualHTML(p){
+  const src = assetFor(p.owner, p.type);
+  return `
+    ${makeAssetImg(src, "pieceArt", ICONS[p.type] || "")}
+    <span class="pieceName">${CARD_NAMES[p.type]}</span>
+  `;
+}
+
+function cardVisualHTML(side, card){
+  const src = assetFor(side, card.type);
+  return makeAssetImg(src, "cardArt", ICONS[card.type] || "");
+}
+
+const CARD_DESC = {
+  sword: "前進一格，跨河後可前/上/下",
+  shield: "附身到棋子，可疊加護盾",
+  bow: "射同一橫列第一個敵人",
+  chariot: "可移動兩次，每次一格，小十字移動，之後休息3回合",
+  nuke: "摧毀 3x3 區域，護盾先破盾",
+  trap: "放置3格陷阱，只擋車；每人整局只有1張"
+};
+
+function createInitialState(){
+  const newState = {
+    turn: "red",
+    boards: { red: Array(25).fill(null), blue: Array(25).fill(null) },
+    hands: { red: [], blue: [] },
+    traps: { red: [], blue: [] },
+    trapCardGiven: { red: false, blue: false },
+    skillCards: { red: [], blue: [] },
+    skillCharge: { red: 0, blue: 0 },
+    freezeNext: { red: false, blue: false },
+    burstBowReady: { red: false, blue: false },
+    skillSpinUi: { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } },
+    selectedPiece: null,
+    selectedCard: null,
+    draggingCard: null,
+    draggingPiece: null,
+    dragPreviewSide: null,
+    dragPreviewIdx: null,
+    actionDone: false,
+    gameOver: false,
+    dropHandled: false
+  };
+
+  ["red","blue"].forEach(side => {
+    while(newState.hands[side].length < 3){
+      newState.hands[side].push(drawCardForSide(side, newState));
+    }
+  });
+
+  return newState;
+}
+
+
+const SKILL_FREEZE = "freeze";
+const SKILL_BURST_BOW = "burstBow";
+
+const SKILL_NAMES = {
+  freeze: "凍結",
+  burstBow: "爆裂弓"
+};
+
+const SKILL_DESC = {
+  freeze: "敵方下一回合直接跳過",
+  burstBow: "下一次弓箭可射任意敵方棋子"
+};
+
+const SKILL_ICONS = {
+  freeze: "❄",
+  burstBow: "💥➹"
+};
+
+function randomSkillCard(){
+  const skills = [SKILL_FREEZE, SKILL_BURST_BOW];
+  return { type: skills[Math.floor(Math.random() * skills.length)] };
+}
+
+let state = createInitialState();
+
+function drawCardForSide(side, gameState = state){
+  const baseTypes = [SWORD, SHIELD, BOW, CHARIOT, NUKE];
+  const types = [...baseTypes];
+
+  // 陷阱：每位玩家整局只會出現 1 張，抽到/發到後就不會再有第二張。
+  if(!gameState.trapCardGiven[side]){
+    types.push(TRAP);
   }
 
-  .pieceArtFallback {
-    font-size: 25px !important;
-  }
-}
-
-
-/* =========================================================
-   卡牌圖片排版修正：避免素材、名稱、描述擠在一起
-   ========================================================= */
-
-.card {
-  width: 132px !important;
-  height: 176px !important;
-  padding: 12px 10px 10px !important;
-  justify-content: flex-start !important;
-  gap: 0 !important;
-}
-
-.cardArtWrap {
-  width: 72px !important;
-  height: 72px !important;
-  margin: 2px auto 6px !important;
-  flex: 0 0 72px !important;
-}
-
-.cardArt {
-  width: 72px !important;
-  height: 72px !important;
-  object-fit: contain !important;
-}
-
-.card strong {
-  display: block !important;
-  width: 100% !important;
-  min-height: 25px !important;
-  margin: 0 0 5px !important;
-  text-align: center !important;
-  font-size: 18px !important;
-  line-height: 1.25 !important;
-  letter-spacing: .06em !important;
-  z-index: 5 !important;
-}
-
-.card small {
-  display: -webkit-box !important;
-  width: 100% !important;
-  max-height: 46px !important;
-  overflow: hidden !important;
-  text-align: center !important;
-  line-height: 1.32 !important;
-  font-size: 12px !important;
-  color: rgba(237,245,255,.78) !important;
-  -webkit-line-clamp: 3 !important;
-  -webkit-box-orient: vertical !important;
-  z-index: 5 !important;
-}
-
-/* 底部金線往下移，不要壓到描述文字 */
-.card::after {
-  bottom: 5px !important;
-}
-
-/* 棋盤上的棋子圖片也稍微置中修正 */
-.pieceArtWrap {
-  width: 50px !important;
-  height: 50px !important;
-  margin-bottom: 2px !important;
-}
-
-.pieceArt {
-  width: 50px !important;
-  height: 50px !important;
-  object-fit: contain !important;
-}
-
-.pieceName {
-  font-size: 12px !important;
-  padding: 1px 6px !important;
-  max-width: 64px !important;
-  overflow: hidden !important;
-  white-space: nowrap !important;
-  text-overflow: ellipsis !important;
-}
-
-/* 核彈卡牌圖示通常比較高，稍微縮一點避免壓字 */
-.card:has(img[src="nuke.png"]) .cardArtWrap {
-  width: 66px !important;
-  height: 66px !important;
-  flex-basis: 66px !important;
-  margin-top: 4px !important;
-  margin-bottom: 8px !important;
-}
-
-.card:has(img[src="nuke.png"]) .cardArt {
-  width: 66px !important;
-  height: 66px !important;
-}
-
-/* 車的素材比較寬，限制寬度 */
-.card:has(img[src*="chariot"]) .cardArt {
-  max-width: 76px !important;
-  max-height: 62px !important;
-}
-
-@media (max-width: 560px) {
-  .card {
-    width: 112px !important;
-    height: 158px !important;
+  const type = types[Math.floor(Math.random() * types.length)];
+  if(type === TRAP){
+    gameState.trapCardGiven[side] = true;
   }
 
-  .cardArtWrap {
-    width: 56px !important;
-    height: 56px !important;
-    flex-basis: 56px !important;
+  return { type };
+}
+
+function randomHand(side, gameState = state){
+  return Array.from({length:3}, () => drawCardForSide(side, gameState));
+}
+
+function drawCard(side){
+  return drawCardForSide(side, state);
+}
+
+function row(i){ return Math.floor(i / 5); }
+function col(i){ return i % 5; }
+function idx(r,c){ return r * 5 + c; }
+function enemy(side){ return side === "red" ? "blue" : "red"; }
+function forwardDir(side){ return side === "red" ? 1 : -1; }
+function frontCol(side){ return side === "red" ? 4 : 0; }
+function backCol(side){ return side === "red" ? 0 : 4; }
+
+function trapKey(side, cellIdx){
+  return `${side}:${cellIdx}`;
+}
+
+function hasEnemyTrapForChariot(owner, boardSide, cellIdx){
+  const opponent = enemy(owner);
+  return state.traps && state.traps[opponent] && state.traps[opponent].includes(trapKey(boardSide, cellIdx));
+}
+
+function getTrapCells(boardSide, centerIdx){
+  // 陷阱一次放 3 格：拖曳到一格作為中心，預覽/放置同一欄的上中下 3 格。
+  const cells = [];
+  const centerRow = row(centerIdx);
+  const centerCol = col(centerIdx);
+
+  for(let r = centerRow - 1; r <= centerRow + 1; r++){
+    if(r < 0 || r > 4) continue;
+    cells.push({ side: boardSide, idx: idx(r, centerCol) });
   }
 
-  .cardArt {
-    width: 56px !important;
-    height: 56px !important;
+  return cells;
+}
+
+
+function renderTrapMarker(owner){
+  return `
+    <span class="trapMarker ${owner}TrapMarker">
+      <img class="trapMarkerImg" src="trap.png" draggable="false" alt="陷阱"
+        onerror="this.remove(); this.parentElement.classList.add('trapImgMissing');">
+      <span class="trapMarkerFallback">陷</span>
+    </span>
+  `;
+}
+
+function markTrapPreview(boardSide, centerIdx){
+  getTrapCells(boardSide, centerIdx).forEach(t => {
+    const cell = document.querySelector(`[data-side="${t.side}"][data-idx="${t.idx}"]`);
+    if(cell) cell.classList.add("dragTrapArea");
+  });
+
+  const center = document.querySelector(`[data-side="${boardSide}"][data-idx="${centerIdx}"]`);
+  if(center) center.classList.add("dragTrapCenter");
+}
+
+function placeTrapCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  if(!selected || selected.card.type !== TRAP) return;
+
+  const placed = getTrapCells(boardSide, cellIdx);
+  if(!state.traps[cur]) state.traps[cur] = [];
+
+  placed.forEach(t => {
+    const key = trapKey(t.side, t.idx);
+    if(!state.traps[cur].includes(key)) state.traps[cur].push(key);
+  });
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  setLog(`陷阱已設置 3 格。只有車會被擋住，其他棋子會當作不存在。`);
+  renderAndSync("placeTrapCard");
+}
+
+
+function countOwnedPieces(side){
+  let n = 0;
+  ["red","blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach(p => { if(p && p.owner === side) n++; });
+  });
+  return n;
+}
+
+
+function ensureSkillState(){
+  if(!state.skillCards) state.skillCards = { red: [], blue: [] };
+  if(!state.skillCharge) state.skillCharge = { red: 0, blue: 0 };
+  if(!state.freezeNext) state.freezeNext = { red: false, blue: false };
+  if(!state.burstBowReady) state.burstBowReady = { red: false, blue: false };
+  if(!state.skillSpinUi) state.skillSpinUi = { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } };
+}
+
+
+function renderSkills(){
+  ensureSkillState();
+
+  ["red","blue"].forEach(side => {
+    const handEl = document.getElementById(`skillHand-${side}`);
+    const chargeEl = document.getElementById(`skillChargeText-${side}`);
+    const spinBtn = document.getElementById(`spinSkillBtn-${side}`);
+    const resultEl = document.getElementById(`skillSpinResult-${side}`);
+    const wheelEl = document.getElementById(`skillWheel-${side}`);
+
+    if(!handEl || !chargeEl || !spinBtn || !resultEl || !wheelEl) return;
+
+    const charge = state.skillCharge[side] || 0;
+    const owned = ((state.skillCards && state.skillCards[side]) || []).length;
+    chargeEl.textContent = `技能能量：${Math.min(charge, 2)} / 2｜持有 ${owned} 張`;
+
+    const ui = (state.skillSpinUi && state.skillSpinUi[side]) ? state.skillSpinUi[side] : { angle: 0, result: "尚未抽取", spinning: false };
+    const spinning = !!ui.spinning;
+
+    const canSpin =
+      !state.gameOver &&
+      side === state.turn &&
+      charge >= 2 &&
+      !spinning &&
+      (!online.enabled || online.playerSide === side);
+
+    spinBtn.disabled = !canSpin;
+    const sideLabel = side === "red" ? "紅方" : "藍方";
+    const isMyButton = !online.enabled || online.playerSide === side;
+    if(spinning){
+      spinBtn.textContent = `${sideLabel}轉盤中...`;
+    } else if(canSpin){
+      spinBtn.textContent = `${sideLabel}抽技能！`;
+    } else if(isMyButton){
+      // 自己那側，顯示未充能原因
+      spinBtn.textContent = charge >= 2 ? `${sideLabel}等待回合` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    } else {
+      // 對方那側，只顯示充能狀態，不顯示「未充能」
+      spinBtn.textContent = charge >= 2 ? `${sideLabel}已充能` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    }
+
+    wheelEl.style.transform = `rotate(${ui.angle || 0}deg)`;
+    wheelEl.classList.toggle("isSpinning", spinning);
+
+    resultEl.textContent = spinning ? "轉動中..." : (ui.result || "尚未抽取");
+    resultEl.classList.toggle("skillResultHit", !spinning && String(resultEl.textContent).includes("抽中"));
+    resultEl.classList.toggle("skillResultMiss", !spinning && String(resultEl.textContent).includes("未抽中"));
+    resultEl.classList.toggle("skillResultPending", spinning);
+
+    handEl.innerHTML = "";
+
+    const skills = state.skillCards[side] || [];
+
+    if(skills.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "skillEmpty";
+      empty.textContent = "目前沒有技能牌";
+      handEl.appendChild(empty);
+      return;
+    }
+
+    skills.forEach((skill, si) => {
+      const btn = document.createElement("button");
+      btn.className = `skillCard ${side}SkillCard`;
+      btn.disabled = state.gameOver || spinning || side !== state.turn || (online.enabled && online.playerSide !== side);
+
+      btn.innerHTML = `
+        <span class="skillIcon">${SKILL_ICONS[skill.type]}</span>
+        <strong>${SKILL_NAMES[skill.type]}</strong>
+        <small>${SKILL_DESC[skill.type]}</small>
+      `;
+
+      btn.addEventListener("click", () => useSkillCard(side, si));
+      handEl.appendChild(btn);
+    });
+  });
+}
+
+
+
+function spinSkillWheel(side){
+  ensureSkillState();
+
+  if(!side) side = state.turn;
+
+  if(online.enabled && online.playerSide !== side){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
   }
 
-  .card strong {
-    font-size: 16px !important;
+  if(side !== state.turn){
+    setLog("只能在自己的回合轉技能轉盤。");
+    return;
   }
 
-  .card small {
-    font-size: 11px !important;
-    max-height: 42px !important;
-  }
-}
-
-
-/* =========================================================
-   場上棋子重做：和手牌卡牌分離，像真正戰棋單位
-   ========================================================= */
-
-.cell .piece {
-  inset: 8px !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  justify-content: center !important;
-  overflow: visible !important;
-  background:
-    radial-gradient(circle at 50% 28%, rgba(255,255,255,.22), transparent 38%),
-    linear-gradient(145deg, rgba(255,255,255,.10), rgba(255,255,255,.02)) !important;
-  border-width: 2px !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.16),
-    inset 0 -18px 22px rgba(0,0,0,.16),
-    0 10px 18px rgba(0,0,0,.34) !important;
-  clip-path: polygon(
-    12px 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    12px 100%,
-    0 calc(100% - 12px),
-    0 12px
-  ) !important;
-}
-
-.cell .redPiece {
-  background:
-    radial-gradient(circle at 50% 24%, rgba(255,230,235,.48), transparent 36%),
-    linear-gradient(145deg, #ff8390 0%, #ef455c 56%, #8f182d 100%) !important;
-  border-color: rgba(255,218,224,.9) !important;
-}
-
-.cell .bluePiece {
-  background:
-    radial-gradient(circle at 50% 24%, rgba(230,245,255,.52), transparent 36%),
-    linear-gradient(145deg, #8ac8ff 0%, #428ce8 56%, #183f91 100%) !important;
-  border-color: rgba(224,242,255,.92) !important;
-}
-
-/* 棋子圖片：放大，成為主體 */
-.cell .pieceArtWrap {
-  width: 58px !important;
-  height: 58px !important;
-  margin: -2px auto 0 !important;
-  z-index: 12 !important;
-}
-
-.cell .pieceArt {
-  width: 58px !important;
-  height: 58px !important;
-  object-fit: contain !important;
-}
-
-.cell .pieceArtFallback {
-  width: 58px !important;
-  height: 58px !important;
-  font-size: 34px !important;
-}
-
-/* 棋子名字：改成底部小銘牌 */
-.cell .pieceName {
-  position: absolute !important;
-  left: 7px !important;
-  right: 7px !important;
-  bottom: 5px !important;
-  z-index: 18 !important;
-  height: 18px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 4px !important;
-  font-size: 11px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  background: rgba(8, 12, 24, .44) !important;
-  border: 1px solid rgba(255,255,255,.18) !important;
-  color: rgba(255,255,255,.96) !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.55) !important;
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
-}
-
-.cell .redPiece .pieceArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.36))
-    drop-shadow(0 0 11px rgba(255,20,40,.50)) !important;
-}
-
-.cell .bluePiece .pieceArt {
-  filter:
-    drop-shadow(0 5px 6px rgba(0,0,0,.36))
-    drop-shadow(0 0 11px rgba(20,110,255,.52)) !important;
-}
-
-/* 手牌卡牌維持卡牌排版，不被棋子樣式影響 */
-.hand .card .cardArtWrap {
-  width: 72px !important;
-  height: 72px !important;
-}
-
-.hand .card .cardArt {
-  width: 72px !important;
-  height: 72px !important;
-}
-
-/* =========================================================
-   冷卻 / 休息狀態重做
-   ========================================================= */
-
-.cell .piece:has(.cooldown) {
-  filter: grayscale(.28) brightness(.78) !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.10),
-    inset 0 -18px 22px rgba(0,0,0,.24),
-    0 0 18px rgba(120,140,255,.20),
-    0 10px 18px rgba(0,0,0,.34) !important;
-}
-
-.cell .piece:has(.cooldown)::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  z-index: 20 !important;
-  pointer-events: none !important;
-  background:
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255,255,255,.08) 0px,
-      rgba(255,255,255,.08) 3px,
-      transparent 3px,
-      transparent 9px
-    ),
-    rgba(5, 10, 22, .42) !important;
-  backdrop-filter: grayscale(.5) blur(.6px) !important;
-  animation: none !important;
-  clip-path: inherit !important;
-}
-
-.cell .cooldown {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  right: auto !important;
-  transform: translate(-50%, -50%) !important;
-  min-width: 68px !important;
-  height: 28px !important;
-  padding: 0 8px !important;
-  z-index: 35 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 3px !important;
-  border-radius: 0 !important;
-  color: white !important;
-  font-size: 12px !important;
-  font-weight: 1000 !important;
-  letter-spacing: .03em !important;
-  white-space: nowrap !important;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.22), transparent 35%),
-    linear-gradient(135deg, #7e72ff, #2387ff) !important;
-  border: 1px solid rgba(255,255,255,.85) !important;
-  box-shadow:
-    0 0 14px rgba(100,160,255,.75),
-    0 5px 12px rgba(0,0,0,.36) !important;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px) !important;
-}
-
-.cell .cooldown::before {
-  content: "⏳" !important;
-  margin-right: 2px !important;
-  font-size: 12px !important;
-}
-
-/* 休息中的車更像停機 */
-.cell .chariotPiece:has(.cooldown) .cooldown {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.22), transparent 35%),
-    linear-gradient(135deg, #ffb84d, #ff6b35) !important;
-  box-shadow:
-    0 0 14px rgba(255,160,60,.75),
-    0 5px 12px rgba(0,0,0,.36) !important;
-}
-
-.cell .chariotPiece:has(.cooldown) .cooldown::before {
-  content: "🛠" !important;
-}
-
-/* 冷卻中的弓箭更像技能 CD */
-.cell .bowPiece:has(.cooldown) .cooldown::before {
-  content: "⌛" !important;
-}
-
-/* 冷卻時圖片不要再被文字 Zzz 蓋住，只暗化 */
-.cell .piece:has(.cooldown) .pieceArt,
-.cell .piece:has(.cooldown) .pieceArtFallback {
-  opacity: .48 !important;
-  filter: grayscale(.75) brightness(.70) !important;
-  transform: scale(.94) !important;
-}
-
-.cell .piece:has(.cooldown) .pieceName {
-  opacity: .55 !important;
-}
-
-/* 護盾徽章位置修正，避免撞到冷卻 */
-.cell .shieldCount {
-  left: -9px !important;
-  top: -9px !important;
-  z-index: 45 !important;
-}
-
-/* 小尺寸修正 */
-@media (max-width: 560px) {
-  .cell .pieceArtWrap,
-  .cell .pieceArt,
-  .cell .pieceArtFallback {
-    width: 38px !important;
-    height: 38px !important;
+  if((state.skillCharge[side] || 0) < 2){
+    setLog("技能能量還沒滿，兩次自己的回合後才能抽技能。");
+    return;
   }
 
-  .cell .pieceArtFallback {
-    font-size: 25px !important;
+  if(state.skillSpinUi && state.skillSpinUi[side] && state.skillSpinUi[side].spinning){
+    setLog("轉盤還在轉，請等結果出來。");
+    return;
   }
-
-  .cell .pieceName {
-    height: 15px !important;
-    font-size: 9px !important;
-    bottom: 4px !important;
-  }
-
-  .cell .cooldown {
-    min-width: 56px !important;
-    height: 23px !important;
-    font-size: 10px !important;
-  }
-}
-
-
-/* =========================================================
-   護盾 Overlay 修正：真正浮在棋子上，不被裁切
-   ========================================================= */
-
-/* 關鍵：棋子本體不要裁切護盾特效 */
-.cell .piece {
-  overflow: visible !important;
-}
-
-/* 護盾狀態外框：改成浮在上層 */
-.shielded {
-  position: relative !important;
-  z-index: 20 !important;
-}
-
-.shielded::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -10px !important;
-  border: 3px solid rgba(113,245,209,.92) !important;
-  box-shadow:
-    0 0 14px rgba(113,245,209,.95),
-    0 0 30px rgba(80,180,255,.55),
-    inset 0 0 18px rgba(113,245,209,.18) !important;
-  pointer-events: none !important;
-  z-index: 60 !important;
-  animation: shieldPulse 1.5s ease-in-out infinite !important;
-  background: rgba(113,245,209,.04) !important;
-  clip-path: polygon(
-    14px 0,
-    calc(100% - 14px) 0,
-    100% 14px,
-    100% calc(100% - 14px),
-    calc(100% - 14px) 100%,
-    14px 100%,
-    0 calc(100% - 14px),
-    0 14px
-  ) !important;
-}
-
-/* 護盾數字徽章：真正浮在左上角 */
-.cell .shieldCount {
-  position: absolute !important;
-  left: -14px !important;
-  top: -14px !important;
-  min-width: 36px !important;
-  height: 28px !important;
-  padding: 0 8px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background:
-    linear-gradient(135deg, #c7fff4, #66d9ff) !important;
-  color: #06234c !important;
-  border: 2px solid rgba(255,255,255,.95) !important;
-  font-size: 13px !important;
-  font-weight: 1000 !important;
-  z-index: 80 !important;
-  box-shadow:
-    0 0 14px rgba(113,245,209,.85),
-    0 4px 10px rgba(0,0,0,.25) !important;
-  clip-path: polygon(
-    8px 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    8px 100%,
-    0 calc(100% - 8px),
-    0 8px
-  ) !important;
-}
-
-/* 棋子圖片本身不要被護盾擠壓 */
-.shielded .pieceArtWrap {
-  z-index: 30 !important;
-}
-
-/* 小螢幕修正 */
-@media (max-width: 560px) {
-  .cell .shieldCount {
-    left: -10px !important;
-    top: -10px !important;
-    min-width: 28px !important;
-    height: 22px !important;
-    font-size: 10px !important;
-  }
-
-  .shielded::after {
-    inset: -7px !important;
-  }
-}
-
-
-/* =========================================================
-   真正盾牌 Overlay：盾圖案 + 藍色保護膜 + 左上角完整不裁切
-   ========================================================= */
-
-.cell .piece {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-/* 被上盾時：藍色膜感 */
-.shielded {
-  position: relative !important;
-}
-
-.shielded::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: -4px !important;
-  background:
-    radial-gradient(circle at 50% 40%,
-      rgba(180,255,255,.28),
-      rgba(80,190,255,.16),
-      rgba(40,120,255,.08),
-      transparent 78%) !important;
-  border: 2px solid rgba(120,235,255,.75) !important;
-  box-shadow:
-    0 0 14px rgba(120,235,255,.55),
-    inset 0 0 18px rgba(120,235,255,.12) !important;
-  pointer-events: none !important;
-  z-index: 35 !important;
-  clip-path: polygon(
-    12px 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% calc(100% - 12px),
-    calc(100% - 12px) 100%,
-    12px 100%,
-    0 calc(100% - 12px),
-    0 12px
-  ) !important;
-}
-
-/* 左上角盾牌圖案：完整浮出，不被切掉 */
-.cell .shieldCount {
-  position: absolute !important;
-  left: -16px !important;
-  top: -16px !important;
-  width: 42px !important;
-  height: 42px !important;
-  min-width: unset !important;
-  padding: 0 !important;
-  border: none !important;
-  background:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), transparent 35%),
-    linear-gradient(135deg, #d9ffff, #7fe8ff, #4aa8ff) !important;
-  color: #06234c !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 0 !important;
-  font-weight: 1000 !important;
-  z-index: 90 !important;
-  box-shadow:
-    0 0 16px rgba(120,235,255,.8),
-    0 6px 14px rgba(0,0,0,.22) !important;
-  clip-path: polygon(
-    50% 0%,
-    92% 18%,
-    92% 58%,
-    50% 100%,
-    8% 58%,
-    8% 18%
-  ) !important;
-  overflow: visible !important;
-}
-
-/* 盾牌 icon */
-.cell .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 20px !important;
-  filter: drop-shadow(0 1px 2px rgba(255,255,255,.35));
-}
-
-/* 數字顯示 */
-.cell .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -6px !important;
-  bottom: -4px !important;
-  min-width: 18px !important;
-  height: 18px !important;
-  padding: 0 4px !important;
-  border-radius: 999px !important;
-  background: #ffffff !important;
-  color: #0b3b73 !important;
-  font-size: 11px !important;
-  font-weight: 1000 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 0 8px rgba(255,255,255,.7);
-}
-
-/* 小螢幕 */
-@media (max-width: 560px) {
-  .cell .shieldCount {
-    left: -10px !important;
-    top: -10px !important;
-    width: 32px !important;
-    height: 32px !important;
-  }
-
-  .cell .shieldCount::before {
-    font-size: 15px !important;
-  }
-}
-
-
-/* =========================================================
-   盾牌徽章乾淨版：只保留左上角完整盾牌，不改棋子本體
-   ========================================================= */
-
-/* 棋子本體完全正常，不做 overlay */
-.shielded::before,
-.shielded::after {
-  content: none !important;
-  display: none !important;
-}
-
-.cell .piece {
-  overflow: visible !important;
-}
-
-/* 左上角完整盾牌徽章 */
-.cell .shieldCount {
-  position: absolute !important;
-  left: -14px !important;
-  top: -14px !important;
-  width: 34px !important;
-  height: 34px !important;
-  min-width: unset !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), transparent 35%),
-    linear-gradient(135deg, #d8ffff, #7fe8ff, #57aaff) !important;
-  border: 2px solid rgba(255,255,255,.95) !important;
-  box-shadow:
-    0 0 12px rgba(120,235,255,.7),
-    0 4px 10px rgba(0,0,0,.22) !important;
-  z-index: 90 !important;
-  font-size: 0 !important;
-  overflow: visible !important;
-  clip-path: polygon(
-    50% 0%,
-    92% 18%,
-    92% 58%,
-    50% 100%,
-    8% 58%,
-    8% 18%
-  ) !important;
-}
-
-/* 盾牌 icon */
-.cell .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 17px !important;
-}
-
-/* 右下小數字 */
-.cell .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -5px !important;
-  bottom: -4px !important;
-  min-width: 16px !important;
-  height: 16px !important;
-  padding: 0 3px !important;
-  background: white !important;
-  color: #0b3b73 !important;
-  border-radius: 999px !important;
-  font-size: 10px !important;
-  font-weight: 1000 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 0 8px rgba(255,255,255,.7);
-}
-
-@media (max-width: 560px) {
-  .cell .shieldCount {
-    width: 28px !important;
-    height: 28px !important;
-    left: -9px !important;
-    top: -9px !important;
-  }
-
-  .cell .shieldCount::before {
-    font-size: 14px !important;
-  }
-}
-
-
-/* =========================================================
-   最終盾牌徽章版
-   條件：
-   1. 不改棋子本體
-   2. 不加藍膜
-   3. 不把盾圖案 overlay 到棋子上
-   4. 左上角只有一顆完整藍色盾牌徽章
-   5. 徽章浮在表面，不被切掉，不影響棋子圖片
-   ========================================================= */
-
-/* 關掉所有舊的護盾 overlay / 藍膜 / 外框 */
-.cell .piece.shielded::before,
-.cell .piece.shielded::after,
-.shielded::before,
-.shielded::after {
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  animation: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 棋子本體維持原樣，只允許徽章浮在表面 */
-.cell .piece {
-  overflow: visible !important;
-}
-
-/* 盾牌徽章：完整一顆，放在棋子左上角表面內側，避免被 clip-path 切掉 */
-.cell .piece .shieldCount {
-  position: absolute !important;
-  left: 4px !important;
-  top: 4px !important;
-
-  width: 27px !important;
-  height: 27px !important;
-  min-width: 27px !important;
-  max-width: 27px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: grid !important;
-  place-items: center !important;
-
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.82) 0 16%, rgba(255,255,255,.28) 17% 30%, transparent 31%),
-    linear-gradient(135deg, #d7ffff 0%, #82eaff 42%, #4aa9ff 100%) !important;
-
-  border: 2px solid rgba(255,255,255,.95) !important;
-  border-radius: 50% !important;
-  clip-path: none !important;
-
-  color: #07376f !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  font-weight: 1000 !important;
-
-  z-index: 100 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
-
-  box-shadow:
-    0 0 10px rgba(120,235,255,.85),
-    0 0 18px rgba(74,169,255,.45),
-    0 3px 8px rgba(0,0,0,.35),
-    inset 0 0 8px rgba(255,255,255,.32) !important;
-
-  transform: none !important;
-}
-
-/* 徽章內的盾牌符號 */
-.cell .piece .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-
-  font-size: 15px !important;
-  line-height: 1 !important;
-  color: #07376f !important;
-
-  z-index: 2 !important;
-  pointer-events: none !important;
-
-  filter:
-    drop-shadow(0 1px 0 rgba(255,255,255,.7))
-    drop-shadow(0 0 3px rgba(255,255,255,.45)) !important;
-}
-
-/* 盾牌層數：小白點，不壓到棋子主體 */
-.cell .piece .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -5px !important;
-  bottom: -5px !important;
-
-  min-width: 15px !important;
-  height: 15px !important;
-  padding: 0 3px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  background: #ffffff !important;
-  color: #0b3b73 !important;
-  border: 1px solid rgba(74,169,255,.8) !important;
-  border-radius: 999px !important;
-
-  font-size: 10px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-
-  box-shadow:
-    0 0 7px rgba(255,255,255,.75),
-    0 2px 5px rgba(0,0,0,.25) !important;
-
-  z-index: 3 !important;
-}
-
-/* 冷卻/休息時，盾牌仍然浮在最上層，不被遮罩蓋掉 */
-.cell .piece:has(.cooldown) .shieldCount {
-  opacity: 1 !important;
-  filter: none !important;
-  z-index: 120 !important;
-}
-
-/* 手機尺寸 */
-@media (max-width: 560px) {
-  .cell .piece .shieldCount {
-    left: 3px !important;
-    top: 3px !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-  }
-
-  .cell .piece .shieldCount::before {
-    font-size: 12px !important;
-  }
-
-  .cell .piece .shieldCount::after {
-    min-width: 13px !important;
-    height: 13px !important;
-    font-size: 9px !important;
-    right: -4px !important;
-    bottom: -4px !important;
-  }
-}
-
-
-/* =========================================================
-   盾牌徽章微調版
-   條件總結：
-   1. 不改棋子本體
-   2. 不做整張 overlay / 藍膜
-   3. 只有左上角一顆完整藍色盾牌徽章
-   4. 徽章 fit 左上角那塊區域
-   5. 徽章在最左上角、完整、不被切掉
-   ========================================================= */
-
-.cell .piece .shieldCount {
-  /* 徽章縮小，真的塞進左上角 */
-  left: 1px !important;
-  top: 1px !important;
-
-  width: 22px !important;
-  height: 22px !important;
-  min-width: 22px !important;
-  max-width: 22px !important;
-
-  border-width: 1.5px !important;
-  box-shadow:
-    0 0 7px rgba(120,235,255,.72),
-    0 2px 6px rgba(0,0,0,.28),
-    inset 0 0 5px rgba(255,255,255,.26) !important;
-}
-
-.cell .piece .shieldCount::before {
-  font-size: 12px !important;
-}
-
-.cell .piece .shieldCount::after {
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 13px !important;
-  height: 13px !important;
-  padding: 0 2px !important;
-
-  font-size: 8px !important;
-  border-width: 1px !important;
-  box-shadow:
-    0 0 5px rgba(255,255,255,.65),
-    0 1px 4px rgba(0,0,0,.22) !important;
-}
-
-/* 小螢幕再更緊一點 */
-@media (max-width: 560px) {
-  .cell .piece .shieldCount {
-    left: 1px !important;
-    top: 1px !important;
-    width: 18px !important;
-    height: 18px !important;
-    min-width: 18px !important;
-    max-width: 18px !important;
-  }
-
-  .cell .piece .shieldCount::before {
-    font-size: 10px !important;
-  }
-
-  .cell .piece .shieldCount::after {
-    min-width: 11px !important;
-    height: 11px !important;
-    font-size: 7px !important;
-    right: -3px !important;
-    bottom: -3px !important;
-  }
-}
-
-
-/* =========================================================
-   左上角角框盾牌徽章（最終條件版）
-   條件：
-   1. 不改棋子本體
-   2. 不做整張 overlay / 藍膜
-   3. 徽章不是圓形，而是貼合左上角那塊角框
-   4. 藍色底色 + 盾牌圖案 都要 fit 那個框
-   5. 徽章就在最左上角，完整顯示，不被切掉
-   ========================================================= */
-
-/* 先完全關掉舊護盾效果，避免互相打架 */
-.cell .piece.shielded::before,
-.cell .piece.shielded::after,
-.shielded::before,
-.shielded::after {
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
-
-/* 不動棋子本體，只讓徽章能浮在上面 */
-.cell .piece {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-/*
-  這裡把 shieldCount 做成「貼角框」的徽章，
-  不是圓章，而是貼合左上角那塊切角框。
-*/
-.cell .piece .shieldCount {
-  position: absolute !important;
-  left: 0 !important;
-  top: 0 !important;
-
-  width: 28px !important;
-  height: 24px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: block !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-
-  z-index: 100 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
 
   /*
-    角框形狀：貼合左上角那塊框
-    左上是斜切，右下是斜收
+    重要修正：
+    這版讓「視覺」跟「結果」完全綁在一起。
+    CSS 的青色中獎區固定在正上方，範圍是 -36° 到 +36°，也就是 20%。
+    所以：
+    - 抽中：最後停在 0° 附近，也就是青色區正中間。
+    - 沒中：最後停在 120°~300° 的灰色區，完全避開青色區。
   */
-  clip-path: polygon(
-    10px 0,
-    100% 0,
-    100% 15px,
-    18px 100%,
-    0 100%,
-    0 10px
-  ) !important;
-
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.70) 0 18%, rgba(255,255,255,.18) 19% 30%, transparent 31%),
-    linear-gradient(135deg, #dffcff 0%, #92ebff 46%, #4caeff 100%) !important;
-
-  border-top: 1px solid rgba(255,255,255,.95) !important;
-  border-left: 1px solid rgba(255,255,255,.92) !important;
-  border-right: 1px solid rgba(255,255,255,.72) !important;
-  border-bottom: 1px solid rgba(255,255,255,.72) !important;
-
-  box-shadow:
-    0 0 8px rgba(125, 230, 255, .48),
-    0 2px 6px rgba(0,0,0,.22),
-    inset 0 0 6px rgba(255,255,255,.18) !important;
-}
-
-/* 盾牌圖案：直接 fit 在角框內，不再是獨立圓章 */
-.cell .piece .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  left: 3px !important;
-  top: 2px !important;
-  width: 18px !important;
-  height: 16px !important;
-
-  display: grid !important;
-  place-items: center !important;
-
-  font-size: 12px !important;
-  line-height: 1 !important;
-  color: #0b4b7b !important;
-
-  filter:
-    drop-shadow(0 1px 0 rgba(255,255,255,.72))
-    drop-shadow(0 0 2px rgba(255,255,255,.28)) !important;
-
-  z-index: 2 !important;
-}
-
-/* 層數：縮成一個很小的白點數字，不破壞角框 */
-.cell .piece .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 12px !important;
-  height: 12px !important;
-  padding: 0 2px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(76,174,255,.75) !important;
-  border-radius: 999px !important;
-
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-
-  box-shadow:
-    0 0 5px rgba(255,255,255,.72),
-    0 1px 4px rgba(0,0,0,.18) !important;
-
-  z-index: 3 !important;
-}
-
-/* 冷卻/休息時依然在最上層 */
-.cell .piece:has(.cooldown) .shieldCount {
-  opacity: 1 !important;
-  filter: none !important;
-  z-index: 120 !important;
-}
-
-/* 手機尺寸 */
-@media (max-width: 560px) {
-  .cell .piece .shieldCount {
-    width: 22px !important;
-    height: 19px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-
-    clip-path: polygon(
-      8px 0,
-      100% 0,
-      100% 12px,
-      15px 100%,
-      0 100%,
-      0 8px
-    ) !important;
-  }
-
-  .cell .piece .shieldCount::before {
-    left: 2px !important;
-    top: 1px !important;
-    width: 14px !important;
-    height: 13px !important;
-    font-size: 10px !important;
-  }
-
-  .cell .piece .shieldCount::after {
-    min-width: 10px !important;
-    height: 10px !important;
-    font-size: 7px !important;
-    right: -3px !important;
-    bottom: -3px !important;
-  }
-}
-
-
-/* =========================================================
-   最終條件修正版
-   1. 棋子顏色底要剛好填滿黑色底框
-   2. 圖案置中
-   3. 盾牌在最左上角，只吃一半
-   4. 盾牌不要太大
-   5. 被保護時要有藍膜
-   ========================================================= */
-
-/* ---------- 關掉舊護盾特效，避免互相干擾 ---------- */
-.cell .piece.shielded::before,
-.cell .piece.shielded::after,
-.shielded::before,
-.shielded::after {
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-  animation: none !important;
-}
-
-/* ---------- 棋子本體：填滿黑色底框 ---------- */
-.cell .piece {
-  /* 關鍵：把黑色底完整填滿 */
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-
-  overflow: visible !important;
-  position: absolute !important;
-
-  /* 跟格子框同一組切角，讓紅/藍底剛好 fit 黑底 */
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-
-  border-width: 1px !important;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.12),
-    inset 0 -18px 24px rgba(0,0,0,.20),
-    0 6px 14px rgba(0,0,0,.22) !important;
-}
-
-.cell .redPiece {
-  background:
-    radial-gradient(circle at 30% 22%, rgba(255,255,255,.34), transparent 22%),
-    linear-gradient(145deg, #ff8b97 0%, #ef4f63 58%, #a21c31 100%) !important;
-  border-color: rgba(255,230,235,.72) !important;
-}
-
-.cell .bluePiece {
-  background:
-    radial-gradient(circle at 30% 22%, rgba(255,255,255,.34), transparent 22%),
-    linear-gradient(145deg, #90ccff 0%, #4a93ec 58%, #1d4a9e 100%) !important;
-  border-color: rgba(228,243,255,.76) !important;
-}
-
-/* 圖案置中 */
-.cell .pieceArtWrap {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 12 !important;
-  pointer-events: none !important;
-}
-
-.cell .pieceArt {
-  width: 54px !important;
-  height: 54px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  object-fit: contain !important;
-}
-
-.cell .pieceArtFallback {
-  width: 54px !important;
-  height: 54px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 34px !important;
-}
-
-/* 棋子名稱維持底部小牌，但不影響置中 */
-.cell .pieceName {
-  position: absolute !important;
-  left: 8px !important;
-  right: 8px !important;
-  bottom: 5px !important;
-  z-index: 18 !important;
-  height: 16px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 4px !important;
-  font-size: 11px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  background: rgba(9, 13, 25, .36) !important;
-  border: 1px solid rgba(255,255,255,.14) !important;
-  color: rgba(255,255,255,.96) !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.55) !important;
-  clip-path: polygon(5px 0, calc(100% - 5px) 0, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0 calc(100% - 5px), 0 5px) !important;
-}
-
-/* ---------- 被保護：藍膜 ---------- */
-.cell .piece.shielded {
-  position: absolute !important;
-}
-
-.cell .piece.shielded .pieceArtWrap::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: 2px !important;
-  pointer-events: none !important;
-  z-index: 20 !important;
-
-  background:
-    radial-gradient(circle at 35% 28%, rgba(225,255,255,.22), transparent 25%),
-    linear-gradient(145deg, rgba(140, 236, 255, .20), rgba(70, 145, 255, .12)) !important;
-
-  border: 1px solid rgba(130, 230, 255, .40) !important;
-  box-shadow:
-    inset 0 0 12px rgba(120, 235, 255, .16),
-    0 0 10px rgba(120, 235, 255, .18) !important;
-
-  clip-path: inherit !important;
-}
-
-/* ---------- 盾牌：最左上角、只吃一半、小一點 ---------- */
-.cell .piece .shieldCount {
-  position: absolute !important;
-  left: -7px !important;
-  top: -7px !important;
-
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  max-width: 18px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: block !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-
-  z-index: 50 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
-
-  /* 小盾牌本體 */
-  border-radius: 50% !important;
-  clip-path: none !important;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.78) 0 18%, rgba(255,255,255,.20) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #d9ffff 0%, #8cecff 46%, #54acff 100%) !important;
-  border: 1px solid rgba(255,255,255,.92) !important;
-
-  box-shadow:
-    0 0 8px rgba(125,230,255,.70),
-    0 2px 5px rgba(0,0,0,.22),
-    inset 0 0 5px rgba(255,255,255,.24) !important;
-}
-
-/* 盾牌圖案 */
-.cell .piece .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 11px !important;
-  line-height: 1 !important;
-  color: #0b4777 !important;
-  filter:
-    drop-shadow(0 1px 0 rgba(255,255,255,.62))
-    drop-shadow(0 0 2px rgba(255,255,255,.20)) !important;
-  z-index: 2 !important;
-}
-
-/* 數字維持小圓點 */
-.cell .piece .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 11px !important;
-  height: 11px !important;
-  padding: 0 2px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.78) !important;
-  border-radius: 999px !important;
-
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-
-  box-shadow:
-    0 0 5px rgba(255,255,255,.72),
-    0 1px 4px rgba(0,0,0,.16) !important;
-
-  z-index: 3 !important;
-}
-
-/* 冷卻時也保留盾與藍膜 */
-.cell .piece:has(.cooldown) .shieldCount {
-  opacity: 1 !important;
-  filter: none !important;
-  z-index: 60 !important;
-}
-
-.cell .piece:has(.cooldown).shielded .pieceArtWrap::after {
-  opacity: .95 !important;
-}
-
-/* 小尺寸 */
-@media (max-width: 560px) {
-  .cell .pieceArt,
-  .cell .pieceArtFallback {
-    width: 38px !important;
-    height: 38px !important;
-  }
-
-  .cell .pieceName {
-    height: 14px !important;
-    font-size: 9px !important;
-    bottom: 4px !important;
-  }
-
-  .cell .piece .shieldCount {
-    width: 15px !important;
-    height: 15px !important;
-    min-width: 15px !important;
-    max-width: 15px !important;
-    left: -6px !important;
-    top: -6px !important;
-  }
-
-  .cell .piece .shieldCount::before {
-    font-size: 9px !important;
-  }
-
-  .cell .piece .shieldCount::after {
-    min-width: 10px !important;
-    height: 10px !important;
-    font-size: 7px !important;
-    right: -4px !important;
-    bottom: -4px !important;
-  }
-}
-
-
-/* =========================================================
-   最終審查修正版
-   1. 盾牌徽章改掛在 cell 上，不被 piece 裁切
-   2. 盾牌在最左上角，只露一半，小一點
-   3. 被保護時有藍膜 + 藍色呼吸 Stroke
-   4. 中間冷卻/休息改成「橫條」，不是橢圓
-   ========================================================= */
-
-/* 先關掉舊的盾牌 overlay / 舊 shieldCount 定義造成的干擾 */
-.cell .piece.shielded::before,
-.cell .piece.shielded::after,
-.shielded::before,
-.shielded::after {
-  content: none !important;
-  display: none !important;
-  opacity: 0 !important;
-  animation: none !important;
-  background: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* 棋子本體維持原樣 */
-.cell .piece {
-  z-index: 5 !important;
-}
-
-/* ---------------- 被保護的藍膜 + 呼吸邊框 ---------------- */
-.cell.shieldedCell {
-  overflow: visible !important;
-}
-
-.cell.shieldedCell::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 1px !important;
-  z-index: 4 !important;
-  pointer-events: none !important;
-
-  background:
-    radial-gradient(circle at 35% 28%, rgba(225,255,255,.16), transparent 30%),
-    linear-gradient(145deg, rgba(150, 238, 255, .16), rgba(60, 130, 255, .10)) !important;
-
-  box-shadow:
-    inset 0 0 14px rgba(120, 235, 255, .14),
-    0 0 0 1px rgba(120, 235, 255, .32) !important;
-
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-}
-
-.cell.shieldedCell::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -1px !important;
-  z-index: 6 !important;
-  pointer-events: none !important;
-
-  border: 2px solid rgba(120, 235, 255, .78) !important;
-  box-shadow:
-    0 0 10px rgba(120, 235, 255, .55),
-    0 0 18px rgba(74, 169, 255, .28),
-    inset 0 0 8px rgba(120, 235, 255, .12) !important;
-
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-
-  animation: shieldStrokeBreath 1.45s ease-in-out infinite !important;
-}
-
-@keyframes shieldStrokeBreath {
-  0%, 100% {
-    opacity: .70;
-    filter: brightness(1);
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    filter: brightness(1.18);
-    transform: scale(1.015);
-  }
-}
-
-/* ---------------- 左上角小盾牌徽章 ---------------- */
-/* 掛在 cell 上，所以不會被 piece 的 clip-path 吃掉 */
-.cell > .shieldCount {
-  position: absolute !important;
-  left: -7px !important;
-  top: -7px !important;
-
-  width: 18px !important;
-  height: 18px !important;
-  min-width: 18px !important;
-  max-width: 18px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: block !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-
-  z-index: 20 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
-
-  border-radius: 50% !important;
-  clip-path: none !important;
-
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.78) 0 18%, rgba(255,255,255,.20) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #d9ffff 0%, #8cecff 46%, #54acff 100%) !important;
-  border: 1px solid rgba(255,255,255,.92) !important;
-
-  box-shadow:
-    0 0 8px rgba(125,230,255,.72),
-    0 2px 5px rgba(0,0,0,.22),
-    inset 0 0 5px rgba(255,255,255,.24) !important;
-}
-
-.cell > .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 11px !important;
-  line-height: 1 !important;
-  color: #0b4777 !important;
-  z-index: 2 !important;
-}
-
-.cell > .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 11px !important;
-  height: 11px !important;
-  padding: 0 2px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.78) !important;
-  border-radius: 999px !important;
-
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-
-  box-shadow:
-    0 0 5px rgba(255,255,255,.72),
-    0 1px 4px rgba(0,0,0,.16) !important;
-
-  z-index: 3 !important;
-}
-
-/* ---------------- 中間冷卻/休息：橫條，不要橢圓 ---------------- */
-.cell .cooldown {
-  position: absolute !important;
-  left: 50% !important;
-  top: 40px !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-
-  width: 52px !important;
-  min-width: 52px !important;
-  height: 16px !important;
-  padding: 0 5px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 3px !important;
-
-  border-radius: 0 !important;
-  clip-path: none !important;
-
-  font-size: 9px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  letter-spacing: .02em !important;
-  white-space: nowrap !important;
-
-  color: #ffffff !important;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.20), transparent 32%),
-    linear-gradient(135deg, #6f86ff, #2f7dff) !important;
-  border: 1px solid rgba(255,255,255,.80) !important;
-
-  box-shadow:
-    0 0 8px rgba(100,160,255,.55),
-    0 2px 6px rgba(0,0,0,.25) !important;
-
-  z-index: 12 !important;
-}
-
-.cell .cooldown::before {
-  content: "" !important;
-  display: none !important;
-}
-
-/* 車的休息條：橘色橫條 */
-.cell .chariotPiece:has(.cooldown) .cooldown {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.20), transparent 32%),
-    linear-gradient(135deg, #ffb74d, #ff7a2f) !important;
-  box-shadow:
-    0 0 8px rgba(255,170,90,.55),
-    0 2px 6px rgba(0,0,0,.25) !important;
-}
-
-/* 手機尺寸 */
-@media (max-width: 560px) {
-  .cell > .shieldCount {
-    width: 15px !important;
-    height: 15px !important;
-    min-width: 15px !important;
-    max-width: 15px !important;
-    left: -6px !important;
-    top: -6px !important;
-  }
-
-  .cell > .shieldCount::before {
-    font-size: 9px !important;
-  }
-
-  .cell > .shieldCount::after {
-    min-width: 10px !important;
-    height: 10px !important;
-    font-size: 7px !important;
-    right: -4px !important;
-    bottom: -4px !important;
-  }
-
-  .cell .cooldown {
-    width: 42px !important;
-    min-width: 42px !important;
-    height: 14px !important;
-    top: 29px !important;
-    font-size: 8px !important;
-  }
-}
-
-
-/* =========================================================
-   最後審查修正版 v2
-   依使用者條件：
-   1. 刪掉所有多餘圖案/字樣（LOCK、Zzz、額外圖案）
-   2. 棋子圖片確實置中
-   3. 盾牌更大、更明顯、在最左上角、overlay、不被切掉
-   4. 被保護時有明顯藍膜 + 藍色呼吸邊線
-   5. 冷卻 / 休息改成更大的橫條，字看得清楚
-   ========================================================= */
-
-/* ---------- 刪掉舊的多餘圖案 ---------- */
-.piece:has(.cooldown)::before,
-.piece:has(.cooldown)::after,
-.pieceArtWrap::before,
-.pieceArtWrap::after,
-.cell .pieceArtWrap::before,
-.cell .pieceArtWrap::after {
-  content: none !important;
-  display: none !important;
-}
-
-.cooldown::before {
-  content: none !important;
-  display: none !important;
-}
-
-/* fallback 只有圖片真的失敗時才顯示 */
-.pieceArtFallback,
-.cardArtFallback {
-  display: none !important;
-}
-
-.assetMissing .pieceArtFallback,
-.assetMissing .cardArtFallback {
-  display: grid !important;
-}
-
-/* ---------- 棋子圖片：真正置中 ---------- */
-.cell .piece {
-  inset: 0 !important;
-  position: absolute !important;
-  overflow: visible !important;
-}
-
-.cell .pieceArtWrap {
-  position: absolute !important;
-  inset: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 10 !important;
-  pointer-events: none !important;
-}
-
-.cell .pieceArt {
-  width: 56px !important;
-  height: 56px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-.cell .pieceArtFallback {
-  width: 56px !important;
-  height: 56px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  place-items: center !important;
-  font-size: 34px !important;
-}
-
-/* ---------- 被保護：藍膜 + 藍色呼吸外線 ---------- */
-.cell.shieldedCell {
-  overflow: visible !important;
-}
-
-.cell.shieldedCell::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 1px !important;
-  z-index: 4 !important;
-  pointer-events: none !important;
-  background:
-    radial-gradient(circle at 35% 30%, rgba(225,255,255,.18), transparent 28%),
-    linear-gradient(145deg, rgba(130, 235, 255, .18), rgba(50, 120, 255, .12)) !important;
-  box-shadow:
-    inset 0 0 14px rgba(120, 235, 255, .18),
-    0 0 0 1px rgba(120, 235, 255, .28) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-}
-
-.cell.shieldedCell::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -1px !important;
-  z-index: 7 !important;
-  pointer-events: none !important;
-  border: 2px solid rgba(120, 235, 255, .95) !important;
-  box-shadow:
-    0 0 8px rgba(120, 235, 255, .75),
-    0 0 18px rgba(74, 169, 255, .46),
-    inset 0 0 8px rgba(120, 235, 255, .16) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-  animation: shieldStrokeBreathStrong 1.5s ease-in-out infinite !important;
-}
-
-@keyframes shieldStrokeBreathStrong {
-  0%, 100% {
-    opacity: .72;
-    filter: brightness(1);
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    filter: brightness(1.22);
-    transform: scale(1.018);
-  }
-}
-
-/* ---------- 左上角盾牌：更大、更明顯、overlay、不被切掉 ---------- */
-.cell > .shieldCount {
-  position: absolute !important;
-  left: -10px !important;
-  top: -10px !important;
-
-  width: 26px !important;
-  height: 26px !important;
-  min-width: 26px !important;
-  max-width: 26px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-
-  display: block !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-
-  z-index: 30 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
-  clip-path: none !important;
-  border-radius: 50% !important;
-
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.82) 0 18%, rgba(255,255,255,.24) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #e4ffff 0%, #9aeeff 48%, #59b1ff 100%) !important;
-  border: 1.5px solid rgba(255,255,255,.96) !important;
-  box-shadow:
-    0 0 10px rgba(125,230,255,.88),
-    0 0 18px rgba(84,172,255,.40),
-    0 3px 7px rgba(0,0,0,.24),
-    inset 0 0 6px rgba(255,255,255,.26) !important;
-}
-
-.cell > .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 14px !important;
-  line-height: 1 !important;
-  color: #0b4b7b !important;
-  z-index: 2 !important;
-}
-
-.cell > .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -5px !important;
-  bottom: -5px !important;
-  min-width: 13px !important;
-  height: 13px !important;
-  padding: 0 2px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.78) !important;
-  border-radius: 999px !important;
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  box-shadow:
-    0 0 5px rgba(255,255,255,.8),
-    0 1px 4px rgba(0,0,0,.18) !important;
-  z-index: 3 !important;
-}
-
-/* ---------- 冷卻 / 休息：大橫條 ---------- */
-.cell .cooldown {
-  position: absolute !important;
-  left: 6px !important;
-  right: 6px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: auto !important;
-  min-width: 0 !important;
-  height: 22px !important;
-  padding: 0 6px !important;
-  z-index: 16 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 0 !important;
-  border-radius: 0 !important;
-  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px) !important;
-  color: #ffffff !important;
-  font-size: 11px !important;
-  font-weight: 1000 !important;
-  letter-spacing: .02em !important;
-  white-space: nowrap !important;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.18), transparent 32%),
-    linear-gradient(135deg, #718cff, #2f7eff) !important;
-  border: 1px solid rgba(255,255,255,.88) !important;
-  box-shadow:
-    0 0 8px rgba(100,160,255,.60),
-    0 2px 6px rgba(0,0,0,.26) !important;
-}
-
-.cell .chariotPiece:has(.cooldown) .cooldown {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.18), transparent 32%),
-    linear-gradient(135deg, #ffb64c, #ff7c30) !important;
-  box-shadow:
-    0 0 8px rgba(255,170,90,.58),
-    0 2px 6px rgba(0,0,0,.26) !important;
-}
-
-@media (max-width: 560px) {
-  .cell .pieceArt,
-  .cell .pieceArtFallback {
-    width: 38px !important;
-    height: 38px !important;
-  }
-
-  .cell > .shieldCount {
-    left: -8px !important;
-    top: -8px !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-  }
-
-  .cell > .shieldCount::before {
-    font-size: 12px !important;
-  }
-
-  .cell > .shieldCount::after {
-    min-width: 11px !important;
-    height: 11px !important;
-    font-size: 7px !important;
-  }
-
-  .cell .cooldown {
-    left: 4px !important;
-    right: 4px !important;
-    height: 18px !important;
-    font-size: 9px !important;
-  }
-}
-
-
-/* =========================================================
-   重作版（依最後條件重新整理）
-   1. 刪掉多餘圖案 / 額外符號
-   2. 棋子圖片確實置中
-   3. 盾牌更大、更明顯、最左上角、overlay、不被切掉
-   4. 被保護時有藍膜 + 明顯藍色呼吸邊線
-   5. 冷卻 / 休息改成更大、更直觀的橫條
-   ========================================================= */
-
-/* ---------- 先清掉所有舊干擾 ---------- */
-.piece:has(.cooldown)::before,
-.piece:has(.cooldown)::after,
-.cooldown::before,
-.cooldown::after,
-.pieceArtWrap::before,
-.pieceArtWrap::after,
-.cell .pieceArtWrap::before,
-.cell .pieceArtWrap::after {
-  content: none !important;
-  display: none !important;
-}
-
-.pieceArtFallback,
-.cardArtFallback {
-  display: none !important;
-}
-
-.pieceArtWrap.assetMissing .pieceArtFallback,
-.cardArtWrap.assetMissing .cardArtFallback {
-  display: grid !important;
-}
-
-/* ---------- 棋子本體：維持填滿底框 ---------- */
-.cell .piece {
-  position: absolute !important;
-  inset: 0 !important;
-  width: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-  display: block !important;
-  z-index: 5 !important;
-}
-
-/* ---------- 棋子圖片：真正置中 ---------- */
-.cell .pieceArtWrap {
-  position: absolute !important;
-  left: 50% !important;
-  top: 50% !important;
-  width: 100% !important;
-  height: 100% !important;
-  transform: translate(-50%, -50%) !important;
-  margin: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 8 !important;
-  pointer-events: none !important;
-}
-
-.cell .pieceArt {
-  width: 56px !important;
-  height: 56px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  object-fit: contain !important;
-  object-position: center center !important;
-  display: block !important;
-  margin: 0 auto !important;
-}
-
-.cell .pieceArtFallback {
-  width: 56px !important;
-  height: 56px !important;
-  max-width: 68% !important;
-  max-height: 68% !important;
-  display: none !important;
-  place-items: center !important;
-  font-size: 34px !important;
-  line-height: 1 !important;
-}
-
-.cell .pieceName {
-  position: absolute !important;
-  left: 8px !important;
-  right: 8px !important;
-  bottom: 5px !important;
-  height: 16px !important;
-  z-index: 12 !important;
-}
-
-/* ---------- 被保護：藍膜 + 明顯呼吸藍線 ---------- */
-.cell.shieldedCell {
-  overflow: visible !important;
-}
-
-.cell.shieldedCell::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 1px !important;
-  z-index: 6 !important;
-  pointer-events: none !important;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(230,255,255,.18), transparent 28%),
-    linear-gradient(145deg, rgba(155,236,255,.18), rgba(58,125,255,.12)) !important;
-  box-shadow:
-    inset 0 0 16px rgba(120,235,255,.18),
-    inset 0 0 4px rgba(255,255,255,.10) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-}
-
-.cell.shieldedCell::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -1px !important;
-  z-index: 10 !important;
-  pointer-events: none !important;
-  border: 2px solid rgba(120,235,255,.95) !important;
-  box-shadow:
-    0 0 8px rgba(120,235,255,.78),
-    0 0 16px rgba(84,172,255,.45),
-    inset 0 0 8px rgba(120,235,255,.16) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-  animation: shieldStrokePulseFinal 1.5s ease-in-out infinite !important;
-}
-
-@keyframes shieldStrokePulseFinal {
-  0%, 100% {
-    opacity: .72;
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-    filter: brightness(1.22);
-  }
-}
-
-/* ---------- 盾牌：更大、更明顯、最左上角、overlay、不被切掉 ---------- */
-.cell > .shieldCount {
-  position: absolute !important;
-  left: -11px !important;
-  top: -11px !important;
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  z-index: 20 !important;
-  pointer-events: none !important;
-  overflow: visible !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-  border-radius: 50% !important;
-  clip-path: none !important;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.84) 0 18%, rgba(255,255,255,.24) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #e6ffff 0%, #9beeff 48%, #58afff 100%) !important;
-  border: 1.5px solid rgba(255,255,255,.96) !important;
-  box-shadow:
-    0 0 10px rgba(125,230,255,.90),
-    0 0 18px rgba(84,172,255,.42),
-    0 3px 7px rgba(0,0,0,.24),
-    inset 0 0 6px rgba(255,255,255,.28) !important;
-}
-
-.cell > .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 15px !important;
-  color: #0b4b7b !important;
-  z-index: 2 !important;
-}
-
-.cell > .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -5px !important;
-  bottom: -5px !important;
-  min-width: 13px !important;
-  height: 13px !important;
-  padding: 0 2px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.78) !important;
-  border-radius: 999px !important;
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  z-index: 3 !important;
-}
-
-/* ---------- 冷卻 / 休息：更大的橫條 ---------- */
-.cell .cooldown {
-  position: absolute !important;
-  left: 4px !important;
-  right: 4px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: auto !important;
-  min-width: 0 !important;
-  height: 22px !important;
-  padding: 0 6px !important;
-  z-index: 14 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 0 !important;
-  clip-path: none !important;
-  color: #ffffff !important;
-  font-size: 11px !important;
-  font-weight: 1000 !important;
-  letter-spacing: .02em !important;
-  white-space: nowrap !important;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.18), transparent 32%),
-    linear-gradient(135deg, #728cff, #2f7fff) !important;
-  border: 1px solid rgba(255,255,255,.88) !important;
-  box-shadow:
-    0 0 8px rgba(100,160,255,.62),
-    0 2px 6px rgba(0,0,0,.26) !important;
-}
-
-.cell .chariotPiece:has(.cooldown) .cooldown {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.18), transparent 32%),
-    linear-gradient(135deg, #ffb74d, #ff7b2f) !important;
-  box-shadow:
-    0 0 8px rgba(255,170,90,.58),
-    0 2px 6px rgba(0,0,0,.26) !important;
-}
-
-@media (max-width: 560px) {
-  .cell .pieceArt,
-  .cell .pieceArtFallback {
-    width: 38px !important;
-    height: 38px !important;
-  }
-
-  .cell > .shieldCount {
-    left: -8px !important;
-    top: -8px !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-  }
-
-  .cell > .shieldCount::before {
-    font-size: 12px !important;
-  }
-
-  .cell > .shieldCount::after {
-    min-width: 11px !important;
-    height: 11px !important;
-    font-size: 7px !important;
-  }
-
-  .cell .cooldown {
-    height: 18px !important;
-    font-size: 9px !important;
-  }
-}
-
-
-/* =========================================================
-   最終微調版
-   1. 冷卻 / 休息 = 灰色大橫條，直接橫過去
-   2. 盾 = 最上層、不被切掉、左上角更明顯
-   3. 被保護 = 藍膜 + 更明顯藍線
-   ========================================================= */
-
-/* 讓外層也能顯示超出內容，避免盾被切 */
-.board,
-.cell,
-.cell.shieldedCell,
-.cell .piece {
-  overflow: visible !important;
-}
-
-/* ---------- 被保護：藍膜 + 更明顯藍線 ---------- */
-.cell.shieldedCell::before {
-  content: "" !important;
-  position: absolute !important;
-  inset: 1px !important;
-  z-index: 9 !important;
-  pointer-events: none !important;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(230,255,255,.18), transparent 28%),
-    linear-gradient(145deg, rgba(155,236,255,.20), rgba(58,125,255,.14)) !important;
-  box-shadow:
-    inset 0 0 18px rgba(120,235,255,.20),
-    inset 0 0 5px rgba(255,255,255,.12) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-}
-
-.cell.shieldedCell::after {
-  content: "" !important;
-  position: absolute !important;
-  inset: -1px !important;
-  z-index: 15 !important;
-  pointer-events: none !important;
-  border: 2px solid rgba(120,235,255,.98) !important;
-  box-shadow:
-    0 0 10px rgba(120,235,255,.85),
-    0 0 22px rgba(84,172,255,.55),
-    inset 0 0 10px rgba(120,235,255,.16) !important;
-  clip-path: polygon(
-    10px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 10px
-  ) !important;
-  animation: shieldStrokePulseStrong2 1.4s ease-in-out infinite !important;
-}
-
-@keyframes shieldStrokePulseStrong2 {
-  0%, 100% {
-    opacity: .78;
-    transform: scale(1);
-    filter: brightness(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.025);
-    filter: brightness(1.24);
-  }
-}
-
-/* ---------- 盾牌：最左上角、最大圖層、不被切掉 ---------- */
-.cell > .shieldCount {
-  position: absolute !important;
-  left: -11px !important;
-  top: -11px !important;
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  z-index: 999 !important;   /* 最高 */
-  pointer-events: none !important;
-  overflow: visible !important;
-  font-size: 0 !important;
-  line-height: 1 !important;
-  color: transparent !important;
-  border-radius: 50% !important;
-  clip-path: none !important;
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.84) 0 18%, rgba(255,255,255,.24) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #e6ffff 0%, #9beeff 48%, #58afff 100%) !important;
-  border: 1.5px solid rgba(255,255,255,.98) !important;
-  box-shadow:
-    0 0 12px rgba(125,230,255,.95),
-    0 0 22px rgba(84,172,255,.55),
-    0 4px 8px rgba(0,0,0,.28),
-    inset 0 0 6px rgba(255,255,255,.28) !important;
-}
-
-.cell > .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  font-size: 15px !important;
-  color: #0b4b7b !important;
-  z-index: 2 !important;
-}
-
-.cell > .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -5px !important;
-  bottom: -5px !important;
-  min-width: 13px !important;
-  height: 13px !important;
-  padding: 0 2px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.82) !important;
-  border-radius: 999px !important;
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  z-index: 3 !important;
-  box-shadow: 0 0 6px rgba(255,255,255,.8) !important;
-}
-
-/* ---------- 冷卻 / 休息：灰色大橫條，直接橫過去 ---------- */
-.cell .cooldown {
-  position: absolute !important;
-  left: -1px !important;
-  right: -1px !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  width: auto !important;
-  min-width: 0 !important;
-  height: 24px !important;
-  padding: 0 8px !important;
-  z-index: 120 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 0 !important;
-  clip-path: none !important;
-  color: #ffffff !important;
-  font-size: 12px !important;
-  font-weight: 1000 !important;
-  letter-spacing: .02em !important;
-  white-space: nowrap !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.22), transparent 32%),
-    linear-gradient(135deg, #9aa1ac, #67707c) !important;
-  border: 1px solid rgba(255,255,255,.85) !important;
-  box-shadow:
-    0 0 8px rgba(130,140,150,.42),
-    0 2px 6px rgba(0,0,0,.30) !important;
-}
-
-.cell .chariotPiece:has(.cooldown) .cooldown {
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.22), transparent 32%),
-    linear-gradient(135deg, #9aa1ac, #67707c) !important;
-}
-
-/* 手機 */
-@media (max-width: 560px) {
-  .cell > .shieldCount {
-    left: -8px !important;
-    top: -8px !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    max-width: 22px !important;
-  }
-
-  .cell > .shieldCount::before {
-    font-size: 12px !important;
-  }
-
-  .cell > .shieldCount::after {
-    min-width: 11px !important;
-    height: 11px !important;
-    font-size: 7px !important;
-  }
-
-  .cell .cooldown {
-    left: -1px !important;
-    right: -1px !important;
-    height: 20px !important;
-    font-size: 10px !important;
-  }
-}
-
-
-/* =========================================================
-   真正最後修正
-   只修三件事：
-   1. 冷卻/休息 = 灰色、整條橫過中間、字清楚
-   2. 盾牌 = 最上層、不被切掉、左上角更明顯
-   3. 藍膜/藍線 = 提高圖層並更明顯
-   ========================================================= */
-
-/* 先保證外層不裁切 */
-.board,
-.board .cell,
-.board .cell .piece {
-  overflow: visible !important;
-}
-
-/* ---------------- 冷卻 / 休息：灰色整條橫過去 ---------------- */
-.board .cell .piece > .cooldown {
-  position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-
-  width: 100% !important;
-  min-width: 100% !important;
-  max-width: 100% !important;
-  height: 26px !important;
-  padding: 0 8px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  z-index: 700 !important;
-
-  background: linear-gradient(180deg, #9aa0aa 0%, #717985 100%) !important;
-  border-top: 1px solid rgba(255,255,255,.75) !important;
-  border-bottom: 1px solid rgba(0,0,0,.28) !important;
-  border-left: none !important;
-  border-right: none !important;
-
-  color: #ffffff !important;
-  font-size: 12px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-  letter-spacing: .02em !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,.45) !important;
-  white-space: nowrap !important;
-
-  border-radius: 0 !important;
-  clip-path: none !important;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.06) inset,
-    0 2px 6px rgba(0,0,0,.28) !important;
-}
-
-/* 休息也同樣灰色，不要橘色 */
-.board .cell .piece.chariotPiece:has(.cooldown) > .cooldown {
-  background: linear-gradient(180deg, #9aa0aa 0%, #717985 100%) !important;
-}
-
-/* ---------------- 藍膜 + 藍色外線：圖層提高 ---------------- */
-.board .cell.shieldedCell::before {
-  z-index: 300 !important;
-  opacity: 1 !important;
-  background:
-    radial-gradient(circle at 35% 28%, rgba(230,255,255,.22), transparent 28%),
-    linear-gradient(145deg, rgba(160,240,255,.22), rgba(70,130,255,.16)) !important;
-  box-shadow:
-    inset 0 0 18px rgba(120,235,255,.22),
-    inset 0 0 6px rgba(255,255,255,.14) !important;
-}
-
-.board .cell.shieldedCell::after {
-  z-index: 320 !important;
-  border: 2px solid rgba(120,235,255,1) !important;
-  box-shadow:
-    0 0 12px rgba(120,235,255,.9),
-    0 0 22px rgba(84,172,255,.60),
-    inset 0 0 10px rgba(120,235,255,.18) !important;
-}
-
-/* ---------------- 盾牌：最上層、不被切掉、左上角更大 ---------------- */
-.board .cell > .shieldCount {
-  position: absolute !important;
-  left: -12px !important;
-  top: -12px !important;
-
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
-  max-width: 30px !important;
-
-  z-index: 9999 !important;
-  overflow: visible !important;
-  pointer-events: none !important;
-
-  border-radius: 50% !important;
-  clip-path: none !important;
-
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.84) 0 18%, rgba(255,255,255,.24) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #e8ffff 0%, #a5f1ff 48%, #5eb5ff 100%) !important;
-  border: 1.5px solid rgba(255,255,255,.98) !important;
-
-  box-shadow:
-    0 0 12px rgba(125,230,255,.95),
-    0 0 24px rgba(84,172,255,.60),
-    0 4px 8px rgba(0,0,0,.28),
-    inset 0 0 6px rgba(255,255,255,.28) !important;
-}
-
-.board .cell > .shieldCount::before {
-  font-size: 16px !important;
-}
-
-.board .cell > .shieldCount::after {
-  right: -5px !important;
-  bottom: -5px !important;
-  min-width: 13px !important;
-  height: 13px !important;
-  font-size: 8px !important;
-  z-index: 10000 !important;
-}
-
-@media (max-width: 560px) {
-  .board .cell .piece > .cooldown {
-    height: 20px !important;
-    font-size: 10px !important;
-  }
-
-  .board .cell > .shieldCount {
-    left: -9px !important;
-    top: -9px !important;
-    width: 24px !important;
-    height: 24px !important;
-    min-width: 24px !important;
-    max-width: 24px !important;
-  }
-
-  .board .cell > .shieldCount::before {
-    font-size: 13px !important;
-  }
-}
-
-
-/* =========================================================
-   只修盾牌徽章
-   1. 完整藍色圓形
-   2. 放在左上角裡面
-   3. 不被切掉
-   4. 圖層最高
-   ========================================================= */
-
-.board,
-.board .cell,
-.board .cell .piece {
-  overflow: visible !important;
-}
-
-/* 藍色圓形盾牌本體 */
-.board .cell > .shieldCount {
-  position: absolute !important;
-  left: 2px !important;
-  top: 2px !important;
-
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
-  max-width: 24px !important;
-
-  padding: 0 !important;
-  margin: 0 !important;
-
-  z-index: 99999 !important;
-  overflow: visible !important;
-  pointer-events: none !important;
-
-  font-size: 0 !important;
-  color: transparent !important;
-  line-height: 1 !important;
-
-  border-radius: 50% !important;
-  clip-path: none !important;
-
-  background:
-    radial-gradient(circle at 34% 28%, rgba(255,255,255,.88) 0 18%, rgba(255,255,255,.24) 19% 32%, transparent 33%),
-    linear-gradient(135deg, #e8ffff 0%, #a6f1ff 50%, #5ab4ff 100%) !important;
-
-  border: 1.5px solid rgba(255,255,255,.98) !important;
-
-  box-shadow:
-    0 0 10px rgba(125,230,255,.95),
-    0 0 18px rgba(84,172,255,.55),
-    0 2px 6px rgba(0,0,0,.28),
-    inset 0 0 6px rgba(255,255,255,.28) !important;
-}
-
-/* 盾牌符號 */
-.board .cell > .shieldCount::before {
-  content: "🛡" !important;
-  position: absolute !important;
-  inset: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-
-  font-size: 13px !important;
-  color: #0b4b7b !important;
-  line-height: 1 !important;
-
-  z-index: 2 !important;
-  pointer-events: none !important;
-}
-
-/* 右下角小數字 */
-.board .cell > .shieldCount::after {
-  content: attr(data-count) !important;
-  position: absolute !important;
-  right: -4px !important;
-  bottom: -4px !important;
-
-  min-width: 12px !important;
-  height: 12px !important;
-  padding: 0 2px !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  background: #ffffff !important;
-  color: #0b4b7b !important;
-  border: 1px solid rgba(84,172,255,.82) !important;
-  border-radius: 999px !important;
-
-  font-size: 8px !important;
-  font-weight: 1000 !important;
-  line-height: 1 !important;
-
-  z-index: 3 !important;
-  box-shadow: 0 0 6px rgba(255,255,255,.8) !important;
-}
-
-/* 手機 */
-@media (max-width: 560px) {
-  .board .cell > .shieldCount {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    max-width: 20px !important;
-    left: 2px !important;
-    top: 2px !important;
-  }
-
-  .board .cell > .shieldCount::before {
-    font-size: 11px !important;
-  }
+  const success = Math.random() < 0.20;
+  const rewardSkill = success ? randomSkillCard() : null;
+
+  const visualStopDegree = success
+    ? (-22 + Math.random() * 44)       // -22 ~ 22，穩穩在青色區
+    : (120 + Math.random() * 180);     // 120 ~ 300，穩穩在灰色區
+
+  const currentAngle = (state.skillSpinUi && state.skillSpinUi[side] && state.skillSpinUi[side].angle) || 0;
+  const fullSpins = 6 + Math.floor(Math.random() * 3);
+
+  // 輪盤 rotate(angle) 後，指針正下方看到的就是 -angle 的位置。
+  // 因此 finalAngle 要等於 -visualStopDegree，再加上整圈。
+  const targetRemainder = ((-visualStopDegree % 360) + 360) % 360;
+  const currentRemainder = ((currentAngle % 360) + 360) % 360;
+  let delta = targetRemainder - currentRemainder;
+  if(delta <= 0) delta += 360;
 
-  .board .cell > .shieldCount::after {
-    min-width: 10px !important;
-    height: 10px !important;
-    font-size: 7px !important;
-  }
-}
-
-
-/* =========================================================
-   陷阱卡牌
-   規則：每人整局最多一張；拖曳放 3 格；只擋車。
-   ========================================================= */
-
-.trapPlaceCell {
-  background:
-    radial-gradient(circle, rgba(180, 140, 255, .25), rgba(80, 55, 130, .16)),
-    rgba(18, 22, 42, .74) !important;
-  border-color: rgba(175, 135, 255, .70) !important;
-  box-shadow:
-    0 0 18px rgba(150, 100, 255, .28),
-    inset 0 0 16px rgba(150, 100, 255, .12) !important;
-}
-
-.dragTrapArea {
-  background:
-    radial-gradient(circle, rgba(190, 160, 255, .42), rgba(90, 60, 150, .28)),
-    rgba(20, 18, 42, .80) !important;
-  border-color: rgba(190, 160, 255, .95) !important;
-  box-shadow:
-    0 0 22px rgba(180, 130, 255, .56),
-    inset 0 0 18px rgba(190, 160, 255, .20) !important;
-  animation: trapPreviewPulse .85s ease-in-out infinite alternate;
-}
-
-.dragTrapCenter {
-  outline: 3px solid rgba(255,255,255,.92) !important;
-  outline-offset: -4px;
-  z-index: 16;
-}
-
-.dragTrapCenter::after {
-  content: "陷";
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: rgba(255,255,255,.94);
-  font-size: 24px;
-  font-weight: 1000;
-  text-shadow: 0 0 14px rgba(170, 120, 255, .95);
-  pointer-events: none;
-  z-index: 20;
-}
-
-@keyframes trapPreviewPulse {
-  from {
-    filter: brightness(1);
-    transform: scale(1);
-  }
-  to {
-    filter: brightness(1.15);
-    transform: scale(1.018);
-  }
-}
-
-
-/* =========================================================
-   陷阱落地顯示
-   放下陷阱後，地板上會顯示陷阱圖案；功能仍然只擋車。
-   ========================================================= */
-
-.hasTrapMarker {
-  overflow: visible !important;
-}
-
-.trapMarker {
-  position: absolute;
-  inset: 9px;
-  z-index: 3;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
-  opacity: .82;
-  filter:
-    drop-shadow(0 0 8px rgba(170,120,255,.55))
-    drop-shadow(0 3px 5px rgba(0,0,0,.35));
-}
-
-.trapMarker::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  background:
-    radial-gradient(circle, rgba(180,140,255,.20), rgba(90,60,160,.12), transparent 72%);
-  border: 1px solid rgba(190,160,255,.42);
-  clip-path: polygon(
-    8px 0,
-    calc(100% - 8px) 0,
-    100% 8px,
-    100% calc(100% - 8px),
-    calc(100% - 8px) 100%,
-    8px 100%,
-    0 calc(100% - 8px),
-    0 8px
-  );
-}
-
-.trapMarkerImg {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  position: relative;
-  z-index: 2;
-}
-
-.trapMarkerFallback {
-  display: none;
-  position: relative;
-  z-index: 2;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  color: #eee4ff;
-  font-size: 24px;
-  font-weight: 1000;
-  text-shadow: 0 0 12px rgba(180,120,255,.9);
-}
-
-.trapImgMissing .trapMarkerFallback {
-  display: grid;
-}
-
-/* 如果陷阱格上剛好也有棋子，陷阱退到後面，不擋棋子視覺 */
-.hasTrapMarker .piece {
-  z-index: 5 !important;
-}
-
-.redTrapMarker {
-  filter:
-    drop-shadow(0 0 8px rgba(255,95,120,.40))
-    drop-shadow(0 3px 5px rgba(0,0,0,.35));
-}
-
-.blueTrapMarker {
-  filter:
-    drop-shadow(0 0 8px rgba(90,170,255,.42))
-    drop-shadow(0 3px 5px rgba(0,0,0,.35));
-}
-
-
-/* =========================================================
-   Firebase 線上房間 UI
-   ========================================================= */
-
-.onlinePanel {
-  width: min(880px, 94vw);
-  margin: 0 auto 18px;
-  padding: 12px 16px;
-  border: 1px solid rgba(243, 211, 122, .24);
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)),
-    rgba(10, 19, 42, .72);
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-  box-shadow: 0 12px 26px rgba(0,0,0,.24);
-  display: grid;
-  gap: 10px;
-  justify-items: center;
-}
-
-.onlineTitle {
-  color: #fff1b8;
-  font-weight: 1000;
-  letter-spacing: .12em;
-  text-shadow: 0 0 12px rgba(243,211,122,.35);
-}
-
-.onlineControls {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.onlineControls button,
-#roomCodeInput {
-  height: 34px;
-  border-radius: 0;
-  border: 1px solid rgba(243, 211, 122, .36);
-  background: rgba(7, 16, 31, .72);
-  color: #edf6ff;
-  font-weight: 900;
-  padding: 0 12px;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
-}
-
-.onlineControls button {
-  cursor: pointer;
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.14), transparent 28%),
-    linear-gradient(135deg, #1a2e4e, #0b1426);
-}
-
-.onlineControls button:hover {
-  filter: brightness(1.18);
-}
-
-#roomCodeInput {
-  width: 132px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: .12em;
-}
-
-.onlineStatus {
-  color: rgba(237,246,255,.82);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-#endTurnBtn:disabled {
-  opacity: .55;
-  cursor: not-allowed;
-  filter: grayscale(.25);
-}
-
-
-/* =========================================================
-   技能抽卡系統
-   ========================================================= */
-
-.skillPanel {
-  width: min(880px, 94vw);
-  margin: 0 auto 18px;
-  padding: 12px 16px;
-  border: 1px solid rgba(150, 210, 255, .28);
-  background:
-    radial-gradient(circle at 20% 10%, rgba(120, 210, 255, .12), transparent 34%),
-    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)),
-    rgba(9, 18, 38, .76);
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
-  box-shadow: 0 12px 26px rgba(0,0,0,.24);
-}
-
-.skillPanelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.skillTitle {
-  color: #bde9ff;
-  font-size: 18px;
-  font-weight: 1000;
-  letter-spacing: .12em;
-  text-shadow: 0 0 12px rgba(120,210,255,.45);
-}
-
-.skillChargeText {
-  color: rgba(237,246,255,.82);
-  font-size: 14px;
-  font-weight: 900;
-}
-
-#spinSkillBtn {
-  min-height: 34px;
-  padding: 0 14px;
-  border: 1px solid rgba(150, 210, 255, .45);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.16), transparent 28%),
-    linear-gradient(135deg, #2a4f7c, #121f3e);
-  color: #edf6ff;
-  font-weight: 1000;
-  cursor: pointer;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
-}
-
-#spinSkillBtn:not(:disabled):hover {
-  filter: brightness(1.18);
-  box-shadow: 0 0 18px rgba(120,210,255,.28);
-}
-
-#spinSkillBtn:disabled {
-  opacity: .48;
-  cursor: not-allowed;
-}
-
-.skillHand {
-  margin-top: 12px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  flex-wrap: wrap;
-  min-height: 56px;
-}
-
-.skillEmpty {
-  color: rgba(237,246,255,.58);
-  font-size: 13px;
-  font-weight: 800;
-  padding: 10px 14px;
-  border: 1px dashed rgba(150, 210, 255, .22);
-}
-
-.skillCard {
-  width: 132px;
-  min-height: 92px;
-  padding: 10px;
-  border: 1px solid rgba(150, 210, 255, .42);
-  background:
-    radial-gradient(circle at 50% 12%, rgba(255,255,255,.16), transparent 30%),
-    linear-gradient(180deg, #172a48, #0b1426);
-  color: #edf6ff;
-  cursor: pointer;
-  display: grid;
-  gap: 4px;
-  justify-items: center;
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
-  box-shadow: 0 10px 20px rgba(0,0,0,.24);
-}
-
-.skillCard:hover:not(:disabled) {
-  transform: translateY(-3px);
-  filter: brightness(1.13);
-}
-
-.skillCard:disabled {
-  opacity: .50;
-  cursor: not-allowed;
-}
-
-.skillIcon {
-  font-size: 28px;
-  line-height: 1;
-  filter: drop-shadow(0 0 8px rgba(150,210,255,.30));
-}
-
-.skillCard strong {
-  font-size: 16px;
-  font-weight: 1000;
-}
-
-.skillCard small {
-  font-size: 11px;
-  line-height: 1.3;
-  color: rgba(237,246,255,.76);
-  text-align: center;
-}
-
-
-/* =========================================================
-   技能抽卡系統（雙邊 UI + 20% 輪盤）
-   ========================================================= */
-
-.skillZone {
-  margin-top: 14px;
-  padding: 12px 12px 10px;
-  border: 1px solid rgba(150, 210, 255, .28);
-  background:
-    radial-gradient(circle at 20% 10%, rgba(120, 210, 255, .10), transparent 34%),
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.015)),
-    rgba(9, 18, 38, .72);
-  clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 12px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 12px), 0 12px);
-  box-shadow: 0 10px 22px rgba(0,0,0,.22);
-}
-
-.skillZoneHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  flex-wrap: wrap;
-}
-
-.skillZoneTitle {
-  color: #bde9ff;
-  font-size: 16px;
-  font-weight: 1000;
-  letter-spacing: .08em;
-  text-shadow: 0 0 12px rgba(120,210,255,.38);
-}
-
-.skillSpinRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.skillWheelWrap {
-  position: relative;
-  width: 96px;
-  height: 96px;
-  flex: 0 0 auto;
-}
-
-.skillWheel {
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  position: relative;
-  border: 3px solid rgba(255,255,255,.88);
-  box-shadow:
-    0 0 0 2px rgba(120, 210, 255, .14) inset,
-    0 0 18px rgba(120, 210, 255, .22),
-    0 6px 14px rgba(0,0,0,.22);
-  background:
-    conic-gradient(
-      from -90deg,
-      #67e8f9 0deg 72deg,
-      #5f6773 72deg 144deg,
-      #747c87 144deg 216deg,
-      #5f6773 216deg 288deg,
-      #747c87 288deg 360deg
-    );
-  transition: transform 1.7s cubic-bezier(.17,.67,.18,1);
-}
-
-.skillWheel::before {
-  content: "";
-  position: absolute;
-  inset: 9px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 30%, rgba(255,255,255,.28), transparent 30%),
-    rgba(8,16,28,.64);
-  border: 1px solid rgba(255,255,255,.22);
-}
-
-.skillWheelCenter {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  z-index: 2;
-  color: #ecfbff;
-  font-size: 18px;
-  font-weight: 1000;
-  text-shadow: 0 0 10px rgba(103,232,249,.40);
-}
-
-.skillWheelPointer {
-  position: absolute;
-  left: 50%;
-  top: -8px;
-  transform: translateX(-50%);
-  width: 0;
-  height: 0;
-  border-left: 11px solid transparent;
-  border-right: 11px solid transparent;
-  border-top: 18px solid #ffe7a6;
-  filter: drop-shadow(0 2px 5px rgba(0,0,0,.28));
-  z-index: 3;
-}
-
-.skillSpinControls {
-  display: grid;
-  gap: 8px;
-  justify-items: start;
-  min-width: 124px;
-}
-
-.spinSkillBtn {
-  min-height: 34px;
-  min-width: 132px;
-  padding: 0 14px;
-  border: 1px solid rgba(150, 210, 255, .45);
-  background:
-    linear-gradient(135deg, rgba(255,255,255,.16), transparent 28%),
-    linear-gradient(135deg, #2a4f7c, #121f3e);
-  color: #edf6ff;
-  font-weight: 1000;
-  cursor: pointer;
-  clip-path: polygon(7px 0, calc(100% - 7px) 0, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0 calc(100% - 7px), 0 7px);
-}
-
-.spinSkillBtn:hover:not(:disabled) {
-  filter: brightness(1.16);
-  box-shadow: 0 0 14px rgba(120,210,255,.24);
-}
-
-.spinSkillBtn:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.skillSpinResult {
-  color: rgba(237,246,255,.82);
-  font-size: 12px;
-  font-weight: 900;
-  min-height: 16px;
-}
-
-.sideSkillHand {
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  min-height: 52px;
-}
-
-.sideSkillHand .skillCard {
-  width: 118px;
-  min-height: 86px;
-}
-
-.redSkillZone .skillWheel {
-  box-shadow:
-    0 0 0 2px rgba(255, 115, 132, .12) inset,
-    0 0 18px rgba(255, 115, 132, .16),
-    0 6px 14px rgba(0,0,0,.22);
-}
-
-.blueSkillZone .skillWheel {
-  box-shadow:
-    0 0 0 2px rgba(98, 170, 255, .14) inset,
-    0 0 18px rgba(98, 170, 255, .18),
-    0 6px 14px rgba(0,0,0,.22);
-}
-
-@media (max-width: 900px) {
-  .skillSpinRow {
-    justify-content: center;
-  }
-
-  .skillSpinControls {
-    justify-items: center;
-    min-width: 0;
-  }
-
-  .sideSkillHand {
-    justify-content: center;
-  }
-}
-
-
-/* =========================================================
-   技能區排版修正版
-   目標：
-   1. 技能區靠近手牌，不要離太遠
-   2. 轉盤與按鈕放近一點
-   3. 按鈕變大、比較好按
-   4. 空技能區不要佔太多高度
-   5. 左右兩邊各自清楚，但整體更緊湊
-   ========================================================= */
-
-.sidePanel .hand {
-  margin-bottom: 8px !important;
-}
-
-/* 技能區靠近手牌 */
-.skillZone {
-  width: min(280px, 100%) !important;
-  margin: 8px auto 0 !important;
-  padding: 10px 12px 12px !important;
-}
-
-/* 標題列更緊湊 */
-.skillZoneHeader {
-  margin-bottom: 7px !important;
-  justify-content: center !important;
-  gap: 8px !important;
-}
-
-.skillZoneTitle {
-  font-size: 14px !important;
-}
-
-.skillChargeText {
-  font-size: 12px !important;
-  padding: 2px 8px !important;
-  border: 1px solid rgba(150,210,255,.18) !important;
-  background: rgba(5,12,24,.32) !important;
-}
-
-/* 輪盤與按鈕靠近，整排置中 */
-.skillSpinRow {
-  display: grid !important;
-  grid-template-columns: 78px 1fr !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 8px !important;
-  width: 100% !important;
-}
-
-/* 輪盤稍微縮小，不搶空間 */
-.skillWheelWrap {
-  width: 74px !important;
-  height: 74px !important;
-  justify-self: center !important;
-}
-
-.skillWheel {
-  width: 74px !important;
-  height: 74px !important;
-  border-width: 2px !important;
-}
-
-.skillWheel::before {
-  inset: 7px !important;
-}
-
-.skillWheelCenter {
-  font-size: 15px !important;
-}
-
-.skillWheelPointer {
-  top: -6px !important;
-  border-left-width: 8px !important;
-  border-right-width: 8px !important;
-  border-top-width: 14px !important;
-}
-
-/* 右側按鈕區改成緊湊好按 */
-.skillSpinControls {
-  min-width: 0 !important;
-  width: 100% !important;
-  gap: 5px !important;
-  justify-items: stretch !important;
-}
-
-/* 抽卡按鈕放大，整條比較好按 */
-.spinSkillBtn {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 42px !important;
-  min-height: 42px !important;
-  padding: 0 10px !important;
-  font-size: 13px !important;
-  letter-spacing: .03em !important;
-  box-shadow:
-    0 0 10px rgba(120,210,255,.18),
-    0 6px 12px rgba(0,0,0,.20) !important;
-}
-
-.spinSkillBtn:not(:disabled) {
-  animation: skillButtonReadyPulse 1.55s ease-in-out infinite;
-}
-
-@keyframes skillButtonReadyPulse {
-  0%, 100% {
-    filter: brightness(1);
-    box-shadow:
-      0 0 10px rgba(120,210,255,.20),
-      0 6px 12px rgba(0,0,0,.20);
-  }
-  50% {
-    filter: brightness(1.14);
-    box-shadow:
-      0 0 18px rgba(120,210,255,.42),
-      0 8px 15px rgba(0,0,0,.24);
-  }
-}
-
-.skillSpinResult {
-  min-height: 16px !important;
-  font-size: 11px !important;
-  text-align: center !important;
-  padding: 2px 4px !important;
-  background: rgba(5,12,24,.24) !important;
-  border: 1px solid rgba(150,210,255,.12) !important;
-}
-
-/* 技能牌區不要離轉盤太遠 */
-.sideSkillHand {
-  margin-top: 7px !important;
-  gap: 7px !important;
-  min-height: 34px !important;
-  justify-content: center !important;
-}
-
-/* 沒技能時縮小，不要佔高度 */
-.skillEmpty {
-  width: 100% !important;
-  padding: 6px 8px !important;
-  font-size: 11px !important;
-  text-align: center !important;
-}
-
-/* 技能牌本體更矮，但可點區域仍明顯 */
-.sideSkillHand .skillCard {
-  width: 122px !important;
-  min-height: 76px !important;
-  padding: 8px !important;
-}
-
-.sideSkillHand .skillIcon {
-  font-size: 24px !important;
-}
-
-.sideSkillHand .skillCard strong {
-  font-size: 14px !important;
-}
-
-.sideSkillHand .skillCard small {
-  font-size: 10px !important;
-}
-
-/* 紅藍區加一點陣營辨識，但不花 */
-.redSkillZone {
-  border-color: rgba(255, 120, 140, .30) !important;
-  box-shadow:
-    0 0 18px rgba(255, 95, 115, .08),
-    0 10px 22px rgba(0,0,0,.20) !important;
-}
-
-.blueSkillZone {
-  border-color: rgba(100, 175, 255, .34) !important;
-  box-shadow:
-    0 0 18px rgba(100, 175, 255, .10),
-    0 10px 22px rgba(0,0,0,.20) !important;
-}
-
-/* 較窄畫面時上下排列，避免擠壓 */
-@media (max-width: 1180px) {
-  .skillSpinRow {
-    grid-template-columns: 1fr !important;
-    gap: 7px !important;
-  }
-
-  .skillWheelWrap {
-    width: 72px !important;
-    height: 72px !important;
-  }
-
-  .skillWheel {
-    width: 72px !important;
-    height: 72px !important;
-  }
-
-  .spinSkillBtn {
-    height: 38px !important;
-    min-height: 38px !important;
-  }
-}
-
-
-/* =========================================================
-   技能區貼近修正版
-   重點不是放大，而是距離靠近：
-   1. 手牌區不要保留多餘高度
-   2. 技能區直接貼在手牌下面
-   3. 手機版也貼近，不會上下一北一南
-   ========================================================= */
-
-/* 手牌標題跟手牌靠近 */
-.sidePanel .handTitle {
-  margin-top: 12px !important;
-  margin-bottom: 6px !important;
-}
+  const finalAngle = currentAngle + fullSpins * 360 + delta;
+
+  state.skillCharge[side] = 0;
+  state.skillSpinUi[side] = {
+    angle: finalAngle,
+    result: "",
+    spinning: true
+  };
+
+  render();
+  if(typeof syncPushGameState === "function") syncPushGameState("spinSkillWheelStart");
+
+  const spinTurnSnapshot = state.turn;
+
+  setTimeout(() => {
+    ensureSkillState();
+
+    // 如果回合已換人（endTurn 先發生），不要再覆蓋 Firebase 上的新狀態
+    if(state.turn !== spinTurnSnapshot){
+      // 只更新本地 UI，不 push 到 Firebase
+      if(success && rewardSkill){
+        state.skillCards[side].push(rewardSkill);
+        state.skillSpinUi[side] = { angle: finalAngle, result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}`, spinning: false };
+      }else{
+        state.skillSpinUi[side] = { angle: finalAngle, result: "未抽中", spinning: false };
+      }
+      render();
+      return;
+    }
 
-/* 手牌本身不要保留巨大空白 */
-.sidePanel .hand {
-  min-height: unset !important;
-  height: auto !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding-bottom: 0 !important;
-  align-items: flex-start !important;
-}
-
-/* 卡牌不要把區塊撐太高 */
-.sidePanel .card {
-  margin-bottom: 0 !important;
-}
-
-/* 技能區直接貼在手牌下面 */
-.sidePanel .skillZone {
-  margin-top: 6px !important;
-  margin-bottom: 0 !important;
-  width: min(300px, 100%) !important;
-  padding: 9px 10px 10px !important;
-}
-
-/* 讓手牌 + 技能變成一組，不要分離 */
-.sidePanel .hand + .skillZone {
-  margin-top: 4px !important;
-}
-
-/* 技能區內部再壓緊 */
-.skillZoneHeader {
-  margin-bottom: 5px !important;
-}
-
-.skillSpinRow {
-  gap: 6px !important;
-}
-
-.sideSkillHand {
-  margin-top: 5px !important;
-  min-height: 26px !important;
-}
-
-/* 沒技能牌時不要佔大空間 */
-.skillEmpty {
-  padding: 4px 6px !important;
-  min-height: 22px !important;
-  line-height: 1.2 !important;
-}
-
-/* 讓整個 sidePanel 內部距離更穩 */
-.sidePanel {
-  row-gap: 0 !important;
-}
-
-/* 中等寬度：還是維持貼近 */
-@media (max-width: 1180px) {
-  .sidePanel .skillZone {
-    margin-top: 4px !important;
-  }
-
-  .skillSpinRow {
-    grid-template-columns: 70px 1fr !important;
-  }
-
-  .skillWheelWrap,
-  .skillWheel {
-    width: 68px !important;
-    height: 68px !important;
-  }
-}
-
-/* =========================================================
-   手機版：上下垂直排列，不縮放，可滑動
-   電腦版 (≥900px)：左右並排，保持不變
-   ========================================================= */
-
-.battleField {
-  transition: none;
-  transform-origin: top center;
-}
-
-@media (max-width: 899px) {
-
-  /* 取消所有 JS scale */
-  .battleField {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 0 !important;
-    align-items: stretch !important;
-    transform: none !important;
-    margin-bottom: 0 !important;
-    width: 100% !important;
-  }
-
-  /* 兩個 sidePanel 全寬 */
-  .sidePanel {
-    width: 100% !important;
-    clip-path: none !important;
-    border-radius: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
-  }
-  .sidePanel::before {
-    display: none !important;
-  }
-
-  /* 紅方在上，藍方在下，中間是戰線 */
-  .redPanel {
-    order: 1;
-    border-top: 2px solid rgba(255, 94, 112, .45) !important;
-    border-bottom: none !important;
-  }
-
-  .bluePanel {
-    order: 3;
-    border-top: none !important;
-    border-bottom: 2px solid rgba(99, 173, 255, .45) !important;
-  }
-
-  /* 戰線 — 手機橫條 */
-  .river {
-    order: 2;
-    writing-mode: horizontal-tb !important;
-    flex-direction: row !important;
-    width: 100% !important;
-    height: 52px !important;
-    min-height: unset !important;
-    max-height: unset !important;
-    padding: 0 24px !important;
-    gap: 12px !important;
-    justify-content: center;
-    align-items: center;
-    font-size: 20px !important;
-    letter-spacing: .22em !important;
-  }
-
-  /* 棋盤縮小格子，適應手機寬度 */
-  .board {
-    grid-template-columns: repeat(5, 56px) !important;
-    grid-template-rows: repeat(5, 56px) !important;
-    gap: 5px !important;
-    padding: 10px !important;
-  }
-
-  .cell {
-    width: 56px !important;
-    height: 56px !important;
-  }
-
-  /* 棋子圖示縮小 */
-  .pieceIcon {
-    font-size: 20px !important;
-  }
-
-  .pieceName {
-    font-size: 9px !important;
-  }
-
-  .pieceShield {
-    font-size: 9px !important;
-    padding: 1px 3px !important;
-  }
-
-  .frontTag {
-    font-size: 8px !important;
-  }
-
-  /* 手牌卡片縮小 */
-  .card {
-    width: 90px !important;
-    min-height: 110px !important;
-    padding: 8px 6px !important;
-  }
-
-  .cardIcon {
-    font-size: 26px !important;
-  }
-
-  .cardName {
-    font-size: 12px !important;
-  }
-
-  .cardDesc {
-    font-size: 9px !important;
-  }
-
-  /* 技能區全寬 */
-  .skillZone {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* 其他元素 */
-  .onlinePanel,
-  .legend,
-  .bottomActionBar,
-  .log,
-  .rules {
-    max-width: 100vw !important;
-    width: 100% !important;
-  }
-
-  /* 手牌橫向置中 */
-  .hand {
-    justify-content: center !important;
-  }
-}
+    if(success && rewardSkill){
+      state.skillCards[side].push(rewardSkill);
+      state.skillSpinUi[side] = {
+        angle: finalAngle,
+        result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}`,
+        spinning: false
+      };
+      setLog(`🎯 ${side === "red" ? "紅方" : "藍方"}轉盤成功！獲得技能「${SKILL_NAMES[rewardSkill.type]}」。`);
+    }else{
+      state.skillSpinUi[side] = {
+        angle: finalAngle,
+        result: "未抽中",
+        spinning: false
+      };
+      setLog(`${side === "red" ? "紅方" : "藍方"}轉盤未抽中，沒有獲得技能。`);
+    }
+
+    render();
+    if(typeof syncPushGameState === "function") syncPushGameState("spinSkillWheelEnd");
+  }, 1800);
+}
+
+
+function useSkillCard(side, skillIndex){
+  ensureSkillState();
+
+  if(state.gameOver) return;
+
+  if(side !== state.turn){
+    setLog("只能在自己的回合使用技能。");
+    return;
+  }
+
+  if(online.enabled && online.playerSide !== side){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  const skill = state.skillCards[side][skillIndex];
+  if(!skill) return;
+
+  if(skill.type === SKILL_FREEZE){
+    const target = enemy(side);
+    state.freezeNext[target] = true;
+    state.skillCards[side].splice(skillIndex, 1);
+    setLog(`❄ ${side === "red" ? "紅方" : "藍方"}使用凍結！${target === "red" ? "紅方" : "藍方"}下一回合將跳過。`);
+    renderAndSync("useFreeze");
+    return;
+  }
+
+  if(skill.type === SKILL_BURST_BOW){
+    state.burstBowReady[side] = true;
+    state.skillCards[side].splice(skillIndex, 1);
+    setLog(`💥➹ 爆裂弓已啟動！你的下一次弓箭攻擊可以射任意敵方棋子。`);
+    renderAndSync("useBurstBow");
+    return;
+  }
+}
+
+function skipFrozenTurnIfNeeded(nextSide){
+  ensureSkillState();
+
+  if(!state.freezeNext[nextSide]) return false;
+
+  const skipped = nextSide;
+  const back = enemy(nextSide);
+  state.freezeNext[skipped] = false;
+
+  state.turn = back;
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  state.draggingCard = null;
+  state.draggingPiece = null;
+  state.dragPreviewSide = null;
+  state.dragPreviewIdx = null;
+  state.actionDone = false;
+
+  state.skillCharge[back] = Math.min((state.skillCharge[back] || 0) + 1, 2);
+
+  while(state.hands[back].length < 3 && countOwnedPieces(back) + state.hands[back].length < 6){
+    if(typeof drawCardForSide === "function") state.hands[back].push(drawCardForSide(back, state));
+    else state.hands[back].push(drawCard(back));
+  }
+
+  setLog(`❄ ${skipped === "red" ? "紅方" : "藍方"}被凍結，跳過一回合！${back === "red" ? "紅方" : "藍方"}回合開始。`);
+  return true;
+}
+
+function render(){
+  renderBoard("red");
+  renderBoard("blue");
+  renderHand("red");
+  renderHand("blue");
+  renderTurn();
+  renderSkills();
+  highlight();
+  applyDragPreviewClasses();
+}
+
+function renderBoard(side){
+  const boardEl = document.getElementById(side + "Board");
+  boardEl.innerHTML = "";
+
+  for(let i = 0; i < 25; i++){
+    const cell = document.createElement("button");
+    cell.className = "cell";
+    cell.dataset.side = side;
+    cell.dataset.idx = i;
+
+    if(col(i) === frontCol(side)){
+      const tag = document.createElement("span");
+      tag.className = "frontTag";
+      tag.textContent = "前線";
+      cell.appendChild(tag);
+    }
+
+    cell.addEventListener("dragenter", e => {
+      if(handleDragPreview(side, i)){
+        e.preventDefault();
+      }
+    });
+
+    cell.addEventListener("dragover", e => {
+      if(handleDragPreview(side, i)){
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }
+    });
+
+    cell.addEventListener("drop", e => {
+      e.preventDefault();
+      handleDropOnCell(side, i);
+    });
+
+    ["red","blue"].forEach(trapOwner => {
+      if(state.traps && state.traps[trapOwner] && state.traps[trapOwner].includes(trapKey(side, i))){
+        cell.classList.add("hasTrapMarker");
+        cell.insertAdjacentHTML("beforeend", renderTrapMarker(trapOwner));
+      }
+    });
+
+    const p = state.boards[side][i];
+    if(p){
+      const piece = document.createElement("div");
+      piece.className = `piece ${p.owner}Piece ${p.type}Piece`;
+      if((p.shields || 0) > 0) piece.classList.add("shielded");
+      piece.innerHTML = `
+        ${pieceVisualHTML(p)}
+        ${p.cd > 0 ? `<span class="cooldown">${p.type === CHARIOT ? "休息" : "冷卻"} ${p.cd}</span>` : ""}
+      `;
+
+      const canDragPiece =
+        p.owner === state.turn &&
+        (!online.enabled || online.playerSide === p.owner) &&
+        !state.gameOver &&
+        !state.actionDone &&
+        p.cd === 0 &&
+        (p.type === SWORD || p.type === BOW || p.type === CHARIOT);
+
+      piece.draggable = canDragPiece;
+
+      if(canDragPiece){
+        piece.addEventListener("dragstart", e => {
+          state.selectedCard = null;
+          state.selectedPiece = { side, idx: i };
+          state.draggingCard = null;
+          state.draggingPiece = { side, idx: i };
+          state.dragPreviewSide = null;
+          state.dragPreviewIdx = null;
+          e.dataTransfer.setData("text/plain", `piece:${side}:${i}`);
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(render, 0);
+        });
+
+        piece.addEventListener("dragend", () => {
+          state.draggingPiece = null;
+          state.dragPreviewSide = null;
+          state.dragPreviewIdx = null;
+          if(state.dropHandled){
+            state.dropHandled = false;
+            return;
+          }
+          render();
+        });
+      }
+
+      cell.appendChild(piece);
+
+      if((p.shields || 0) > 0){
+        cell.classList.add("shieldedCell");
+        const badge = document.createElement("span");
+        badge.className = "shieldCount";
+        badge.dataset.count = p.shields;
+        cell.appendChild(badge);
+      }
+    }
+
+    cell.addEventListener("click", () => handleCellClick(side, i));
+    boardEl.appendChild(cell);
+  }
+}
+
+function renderHand(side){
+  const hand = state.hands[side];
+  document.getElementById(side + "HandTitle").textContent =
+    `手牌 (${hand.length}/3)｜最多共 6 張`;
+
+  const handEl = document.getElementById(side + "Hand");
+  handEl.innerHTML = "";
+
+  hand.forEach((card, ci) => {
+    const btn = document.createElement("button");
+    const active = state.turn === side && !state.actionDone && !state.gameOver && (!online.enabled || online.playerSide === side);
+    const selected = state.selectedCard && state.selectedCard.side === side && state.selectedCard.ci === ci;
+
+    btn.className = `card ${side}Card ${selected ? "selectedCard" : ""}`;
+    if(!active) btn.classList.add("disabledCard");
+
+    btn.draggable = active;
+
+    if(active){
+      btn.addEventListener("dragstart", e => {
+        state.selectedPiece = null;
+        state.selectedCard = {side, ci, card};
+        state.draggingPiece = null;
+        state.draggingCard = {side, ci, card};
+        state.dragPreviewSide = null;
+        state.dragPreviewIdx = null;
+        e.dataTransfer.setData("text/plain", `card:${card.type}:${ci}`);
+        e.dataTransfer.effectAllowed = "move";
+
+        if(card.type === NUKE) setLog("拖曳核彈到敵方格子，會顯示 3x3 爆炸範圍。");
+        else if(card.type === TRAP) setLog("拖曳陷阱到任一格，會設置上中下 3 格；只會擋車。");
+        else if(card.type === SHIELD) setLog("拖曳盾到自己的棋子上，可以疊加護盾。");
+        else setLog(`拖曳${CARD_NAMES[card.type]}到可放置格。`);
+
+        setTimeout(render, 0);
+      });
+
+      btn.addEventListener("dragend", () => {
+        state.draggingCard = null;
+        state.dragPreviewSide = null;
+        state.dragPreviewIdx = null;
+        if(state.dropHandled){
+          state.dropHandled = false;
+          return;
+        }
+        render();
+      });
+    }
+
+    btn.innerHTML = `
+      ${cardVisualHTML(side, card)}
+      <strong>${CARD_NAMES[card.type]}</strong>
+      <small>${CARD_DESC[card.type]}</small>
+    `;
+
+    if(active){
+      btn.addEventListener("click", () => {
+        state.selectedPiece = null;
+        state.draggingCard = null;
+        state.draggingPiece = null;
+        if(selected){
+          state.selectedCard = null;
+          setLog("已取消選牌");
+        }else{
+          state.selectedCard = {side, ci, card};
+          if(card.type === SHIELD) setLog("已選擇「盾」，綠色格子可套盾，也可以直接拖曳。");
+          else if(card.type === NUKE) setLog("已選擇「核彈」，選敵方格子作為 3x3 爆炸中心。");
+          else if(card.type === TRAP) setLog("已選擇「陷阱」，選一格後會設置上中下 3 格；只擋車。");
+          else setLog(`已選擇「${CARD_NAMES[card.type]}」，請選擇放置格。`);
+        }
+        render();
+      });
+    }
+
+    handEl.appendChild(btn);
+  });
+}
+
+function renderTurn(){
+  const label = document.getElementById("turnLabel");
+  const endBtn = document.getElementById("endTurnBtn");
+
+  const newClass = `turnLabel ${state.turn === "red" ? "redTurn" : "blueTurn"}`;
+  const newText = state.gameOver ? "遊戲結束" : `${state.turn === "red" ? "紅方" : "藍方"}回合`;
+
+  // 只在文字或顏色真的有變化時才播動畫
+  if(label.textContent !== newText || label.className !== newClass){
+    label.classList.add("turnLabelFlip");
+    label.addEventListener("animationend", () => label.classList.remove("turnLabelFlip"), { once: true });
+  }
+
+  label.className = newClass + (label.className.includes("turnLabelFlip") ? " turnLabelFlip" : "");
+  label.textContent = newText;
+
+  if(endBtn){
+    const canEnd = !online.enabled || online.playerSide === state.turn;
+    endBtn.disabled = !canEnd || state.gameOver;
+
+    if(state.actionDone && !state.gameOver && canEnd){
+      endBtn.classList.add("turnAlert");
+      endBtn.textContent = "請結束回合 ➜";
+      endBtn.setAttribute("aria-label", "已完成動作，請結束回合");
+    }else{
+      endBtn.classList.remove("turnAlert");
+      endBtn.textContent = canEnd ? "結束回合" : "等待對手";
+      endBtn.setAttribute("aria-label", canEnd ? "結束回合" : "等待對手");
+    }
+  }
+  updateOnlineStatus();
+}
+
+function handleCellClick(boardSide, cellIdx){
+  if(state.gameOver) return;
+  if(!canUseOnlineTurn()){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  const continuingChariot =
+    state.selectedPiece &&
+    state.actionDone === false &&
+    (() => {
+      const p = state.boards[state.selectedPiece.side][state.selectedPiece.idx];
+      return p && p.type === CHARIOT && (p.moveCount || 0) === 1 && p.owner === state.turn;
+    })();
+
+  if(state.actionDone && !continuingChariot) return;
+
+  if(state.selectedCard){
+    if(state.selectedCard.card.type === SHIELD){
+      applyShieldCard(boardSide, cellIdx);
+    }else if(state.selectedCard.card.type === NUKE){
+      useNukeCard(boardSide, cellIdx);
+    }else if(state.selectedCard.card.type === TRAP){
+      placeTrapCard(boardSide, cellIdx);
+    }else{
+      placeCard(boardSide, cellIdx);
+    }
+    return;
+  }
+
+  const clicked = state.boards[boardSide][cellIdx];
+
+  if(state.selectedPiece){
+    const from = state.selectedPiece;
+    if(from.side === boardSide && from.idx === cellIdx){
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    const attacker = state.boards[from.side][from.idx];
+    if(!attacker || attacker.owner !== state.turn){
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    if(attacker.type === SWORD){
+      const moves = getSwordMoves(from.side, from.idx);
+      if(moves.some(m => m.side === boardSide && m.idx === cellIdx)){
+        moveSword(from.side, from.idx, boardSide, cellIdx);
+        return;
+      }
+
+      const attacks = getSwordAttacks(from.side, from.idx);
+      if(attacks.some(a => a.side === boardSide && a.idx === cellIdx)){
+        attackPiece(from.side, from.idx, boardSide, cellIdx);
+        return;
+      }
+
+      setLog("無效移動");
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    if(attacker.type === CHARIOT){
+      const moves = getChariotMoves(from.side, from.idx);
+      if(moves.some(m => m.side === boardSide && m.idx === cellIdx)){
+        moveChariot(from.side, from.idx, boardSide, cellIdx);
+      }else{
+        setLog("車不能走這格。車一次走兩格，不能斜走。");
+        state.selectedPiece = null;
+        render();
+      }
+      return;
+    }
+
+    if(attacker.type === BOW){
+      const targets = getBowTargets(from.side, from.idx);
+      if(targets.some(t => t.side === boardSide && t.idx === cellIdx)){
+        attackPiece(from.side, from.idx, boardSide, cellIdx);
+      }else{
+        setLog("弓箭不能攻擊這格。弓箭只會射同一橫列的第一個敵人。");
+        state.selectedPiece = null;
+        render();
+      }
+      return;
+    }
+
+    return;
+  }
+
+  if(clicked && clicked.owner === state.turn){
+    state.selectedPiece = {side: boardSide, idx: cellIdx};
+    state.selectedCard = null;
+    render();
+  }
+}
+
+function placeCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  const card = selected.card;
+
+  if(boardSide !== cur){
+    setLog("只能放在自己的陣地。");
+    return;
+  }
+
+  if(state.boards[boardSide][cellIdx]){
+    setLog("這格已經有棋子。");
+    return;
+  }
+
+  if((card.type === SWORD || card.type === CHARIOT) && col(cellIdx) !== backCol(cur)){
+    setLog(`${CARD_NAMES[card.type]}只能放在自己底線。`);
+    return;
+  }
+
+  state.boards[cur][cellIdx] = {
+    type: card.type,
+    owner: cur,
+    crossed: false,
+    moved: false,
+    moveCount: 0,
+    shields: 0,
+    cd: card.type === BOW ? 2 : 0
+  };
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.actionDone = true;
+  setLog(`${cur === "red" ? "紅方" : "藍方"}放置了${CARD_NAMES[card.type]}。`);
+  renderAndSync("placeCard");
+}
+
+
+function useNukeCard(boardSide, cellIdx){
+  const cur = state.turn;
+  if(boardSide !== enemy(cur)){
+    setLog("核彈必須投放在敵方區域。");
+    return;
+  }
+
+  const hitCells = [];
+
+  for(let r = row(cellIdx)-1; r <= row(cellIdx)+1; r++){
+    for(let c = col(cellIdx)-1; c <= col(cellIdx)+1; c++){
+      if(r < 0 || r > 4 || c < 0 || c > 4) continue;
+
+      const targetIdx = idx(r,c);
+      hitCells.push(targetIdx);
+
+      const target = state.boards[boardSide][targetIdx];
+      if(!target) continue;
+
+      if((target.shields || 0) > 0){
+        target.shields -= 1;
+      }else{
+        state.boards[boardSide][targetIdx] = null;
+      }
+    }
+  }
+
+  const selected = state.selectedCard;
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  renderAndSync("useNukeCard");
+
+  hitCells.forEach((targetIdx, index) => {
+    const blastCell = document.querySelector(`[data-side="${boardSide}"][data-idx="${targetIdx}"]`);
+    if(blastCell){
+      setTimeout(() => {
+        blastCell.classList.add("nukeBlast");
+        setTimeout(() => {
+          blastCell.classList.remove("nukeBlast");
+        }, 1400);
+      }, index * 60);
+    }
+  });
+
+  setLog("☢ 核彈爆炸！3x3 區域受到摧毀。");
+}
+
+function canApplyDraggedShield(boardSide, cellIdx){
+  if(!state.selectedCard || state.selectedCard.card.type !== SHIELD) return false;
+  const p = state.boards[boardSide][cellIdx];
+  return !!(p && p.owner === state.turn && p.type !== SHIELD);
+}
+
+function applyShieldCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  if(!selected || selected.card.type !== SHIELD) return;
+
+  const target = state.boards[boardSide][cellIdx];
+
+  if(!target || target.owner !== cur){
+    setLog("盾只能套在自己的棋子上。");
+    return;
+  }
+
+  target.shields = (target.shields || 0) + 1;
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.actionDone = true;
+  setLog(`${cur === "red" ? "紅方" : "藍方"}替${CARD_NAMES[target.type]}套上護盾，目前 ${target.shields} 層。`);
+  renderAndSync("applyShieldCard");
+}
+
+function getSwordMoves(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== SWORD) return [];
+
+  const moves = [];
+  const dir = forwardDir(p.owner);
+  const r = row(fromIdx);
+  const c = col(fromIdx);
+
+  if(!p.crossed){
+    const nextC = c + dir;
+    if(nextC >= 0 && nextC <= 4){
+      const nextIdx = idx(r, nextC);
+      if(!state.boards[fromSide][nextIdx]) moves.push({side: fromSide, idx: nextIdx, type: "move"});
+    }else{
+      const targetSide = enemy(p.owner);
+      const crossIdx = idx(r, frontCol(targetSide));
+      if(!state.boards[targetSide][crossIdx]) moves.push({side: targetSide, idx: crossIdx, type: "cross"});
+    }
+  }else{
+    [[r, c + dir], [r - 1, c], [r + 1, c]].forEach(([rr, cc]) => {
+      if(rr >= 0 && rr < 5 && cc >= 0 && cc < 5){
+        const targetIdx = idx(rr, cc);
+        if(!state.boards[fromSide][targetIdx]) moves.push({side: fromSide, idx: targetIdx, type: "move"});
+      }
+    });
+  }
+
+  return moves;
+}
+
+function getSwordAttacks(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== SWORD) return [];
+
+  const attacks = [];
+  const dir = forwardDir(p.owner);
+  const r = row(fromIdx);
+  const c = col(fromIdx);
+
+  const check = (side, rr, cc) => {
+    if(rr < 0 || rr > 4 || cc < 0 || cc > 4) return;
+    const targetIdx = idx(rr, cc);
+    const target = state.boards[side][targetIdx];
+    if(target && target.owner !== p.owner) attacks.push({side, idx: targetIdx});
+  };
+
+  if(!p.crossed){
+    const nextC = c + dir;
+    if(nextC < 0 || nextC > 4){
+      const targetSide = enemy(p.owner);
+      const entryC = frontCol(targetSide);
+      check(targetSide, r, entryC);
+      check(targetSide, r - 1, entryC);
+      check(targetSide, r + 1, entryC);
+    }
+  }else{
+    check(fromSide, r, c + dir);
+    check(fromSide, r - 1, c);
+    check(fromSide, r + 1, c);
+  }
+
+  return attacks;
+}
+
+
+
+function getChariotMoves(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== CHARIOT || p.cd > 0) return [];
+
+  const moves = [];
+  const options = [
+    [0, 1], [0, -1],
+    [1, 0], [-1, 0]
+  ];
+
+  options.forEach(([dr, dc]) => {
+    const rr = row(fromIdx) + dr;
+    const cc = col(fromIdx) + dc;
+
+    if(rr < 0 || rr > 4) return;
+
+    if(cc >= 0 && cc <= 4){
+      const targetIdx = idx(rr, cc);
+      const occupant = state.boards[fromSide][targetIdx];
+      const blocked = hasEnemyTrapForChariot(p.owner, fromSide, targetIdx);
+      if(blocked) return; // 陷阱擋住
+      if(!occupant){
+        moves.push({side: fromSide, idx: targetIdx}); // 空格，移動
+      } else if(occupant.owner !== p.owner){
+        moves.push({side: fromSide, idx: targetIdx}); // 有敵人，可以殺
+      }
+      // 有自己人則跳過
+      return;
+    }
+
+    const targetSide = enemy(p.owner);
+
+    if(cc > 4 && p.owner === "red"){
+      const over = cc - 5;
+      if(over >= 0 && over <= 4){
+        const targetIdx = idx(rr, over);
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
+          moves.push({side: targetSide, idx: targetIdx});
+        }
+      }
+    }
+
+    if(cc < 0 && p.owner === "blue"){
+      const over = 5 + cc;
+      if(over >= 0 && over <= 4){
+        const targetIdx = idx(rr, over);
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
+          moves.push({side: targetSide, idx: targetIdx});
+        }
+      }
+    }
+  });
+
+  return moves;
+}
+
+function moveChariot(fromSide, fromIdx, toSide, toIdx){
+  const p = state.boards[fromSide][fromIdx];
+
+  if(!p || p.cd > 0){
+    setLog(`車正在充能中，還有 ${p ? p.cd : 0} 回合。`);
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  const valid = getChariotMoves(fromSide, fromIdx)
+    .some(m => m.side === toSide && m.idx === toIdx);
+
+  if(!valid){
+    if(hasEnemyTrapForChariot(p.owner, toSide, toIdx)){
+      setLog("車被陷阱擋住了，不能通過這格。");
+    }else{
+      setLog("車只能小十字移動一格（前後上下），不能斜走。");
+    }
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  const movedTimes = p.moveCount || 0;
+
+  state.boards[fromSide][fromIdx] = null;
+  const victim = state.boards[toSide][toIdx];
+  if(victim && victim.owner !== p.owner){
+    setLog(`車殲滅了敵方的${CARD_NAMES[victim.type] || victim.type}！`);
+    state.actionDone = true;
+  }
+  state.boards[toSide][toIdx] = {
+    ...p,
+    moveCount: movedTimes + 1
+  };
+
+  if(movedTimes + 1 >= 2){
+    state.boards[toSide][toIdx].cd = 3;
+    state.boards[toSide][toIdx].moveCount = 0;
+    if(isWinningSword(toSide, toIdx)){
+    win(p.owner);
+    return;
+  }
+
+  state.selectedPiece = null;
+    state.actionDone = true;
+    setLog("車已移動兩次，進入充能狀態 3 回合。");
+  }else{
+    if(isWinningSword(toSide, toIdx)){
+      win(p.owner);
+      return;
+    }
+
+    state.selectedPiece = { side: toSide, idx: toIdx };
+    state.actionDone = false;
+    setLog("車已移動第一次，黃色格子還可以再走一次。");
+  }
+
+  renderAndSync("moveChariot");
+}
+
+function getBowTargets(fromSide, fromIdx){
+  const bow = state.boards[fromSide][fromIdx];
+  if(!bow || bow.type !== BOW || bow.cd > 0) return [];
+
+  const targets = [];
+  const r = row(fromIdx);
+  const owner = bow.owner;
+
+  if(state.burstBowReady && state.burstBowReady[owner]){
+    ["red","blue"].forEach(boardSide => {
+      state.boards[boardSide].forEach((p, pieceIdx) => {
+        if(p && p.owner !== owner){
+          targets.push({side: boardSide, idx: pieceIdx});
+        }
+      });
+    });
+    return targets;
+  }
+
+  const dir = forwardDir(owner);
+
+  let c = col(fromIdx) + dir;
+  while(c >= 0 && c <= 4){
+    const scanIdx = idx(r, c);
+    const p = state.boards[fromSide][scanIdx];
+    if(p && p.owner !== owner){
+      targets.push({side: fromSide, idx: scanIdx});
+      return targets;
+    }
+    c += dir;
+  }
+
+  const otherSide = enemy(owner);
+  c = frontCol(otherSide);
+  while(c >= 0 && c <= 4){
+    const scanIdx = idx(r, c);
+    const p = state.boards[otherSide][scanIdx];
+    if(p && p.owner !== owner){
+      targets.push({side: otherSide, idx: scanIdx});
+      return targets;
+    }
+    c += dir;
+  }
+
+  return targets;
+}
+
+function moveSword(fromSide, fromIdx, toSide, toIdx){
+  const p = state.boards[fromSide][fromIdx];
+  const move = getSwordMoves(fromSide, fromIdx).find(m => m.side === toSide && m.idx === toIdx);
+
+  if(!move){
+    setLog("無效移動");
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  state.boards[fromSide][fromIdx] = null;
+  state.boards[toSide][toIdx] = {
+    ...p,
+    crossed: move.type === "cross" ? true : p.crossed,
+    moved: true
+  };
+
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  if(isWinningSword(toSide, toIdx)){
+    win(p.owner);
+    return;
+  }
+
+  setLog(move.type === "cross" ? "劍跨河成功！" : "移動成功。");
+  renderAndSync("moveSword");
+}
+
+function attackPiece(fromSide, fromIdx, targetSide, targetIdx){
+  const attacker = state.boards[fromSide][fromIdx];
+  const defender = state.boards[targetSide][targetIdx];
+
+  if(!attacker || !defender || defender.owner === attacker.owner){
+    setLog("不能攻擊這格。");
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  if(attacker.type === BOW && attacker.cd > 0){
+    setLog(`弓箭冷卻中，還有 ${attacker.cd} 回合。`);
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  if((defender.shields || 0) > 0){
+    defender.shields -= 1;
+    setLog(`護盾擋住了攻擊！剩下 ${defender.shields} 層。`);
+  }else{
+    state.boards[targetSide][targetIdx] = null;
+    setLog(`${CARD_NAMES[attacker.type]}擊敗了${CARD_NAMES[defender.type]}。`);
+  }
+
+  if(attacker.type === BOW){
+    attacker.cd = 2;
+    if(state.burstBowReady && state.burstBowReady[attacker.owner]){
+      state.burstBowReady[attacker.owner] = false;
+      setLog("爆裂弓射擊完成，效果已消耗。");
+    }
+  }
+
+  state.selectedPiece = null;
+  state.actionDone = true;
+  renderAndSync("attackPiece");
+}
+
+function isWinningSword(boardSide, pieceIdx){
+  const p = state.boards[boardSide][pieceIdx];
+  if(!p) return false;
+
+  // 任何己方棋子只要到達敵方底線就直接獲勝
+  if(p.owner === "red"){
+    return boardSide === "blue" && col(pieceIdx) === backCol("blue");
+  }
+
+  return boardSide === "red" && col(pieceIdx) === backCol("red");
+}
+
+function win(side){
+  state.gameOver = true;
+  state.actionDone = true;
+  setLog(`🏆 ${side === "red" ? "紅方" : "藍方"}獲勝！劍攻到底線！`);
+  renderAndSync("win");
+
+  const oldBtn = document.getElementById("restartBtn");
+  if(oldBtn) oldBtn.remove();
+
+  const btn = document.createElement("button");
+  btn.id = "restartBtn";
+  btn.className = "restartBtn";
+  btn.textContent = "重新開始";
+  btn.addEventListener("click", restart);
+  document.getElementById("game").appendChild(btn);
+}
+
+function restart(){
+  if(online.enabled && online.playerSide !== "red"){
+    setLog("線上模式中，只有紅方可以重新開始。");
+    return;
+  }
+  state = createInitialState();
+  const btn = document.getElementById("restartBtn");
+  if(btn) btn.remove();
+  setLog("歡迎！紅方先手。");
+  renderAndSync("restart");
+}
+
+function endTurn(){
+  if(state.gameOver) return;
+  if(state.skillSpinUi && state.skillSpinUi[state.turn] && state.skillSpinUi[state.turn].spinning){
+    setLog("請先等技能轉盤轉完，再結束回合。");
+    return;
+  }
+  if(!canUseOnlineTurn()){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  ["red","blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach(p => {
+      if(!p) return;
+      p.moved = false;
+      if((p.type === BOW || p.type === CHARIOT) && p.owner === state.turn && p.cd > 0) p.cd--;
+      if(p.type === CHARIOT && p.owner === state.turn && p.cd === 0) p.moveCount = 0;
+    });
+  });
+
+  const next = enemy(state.turn);
+  state.turn = next;
+  ensureSkillState();
+  state.skillCharge[next] = Math.min((state.skillCharge[next] || 0) + 1, 2);
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  state.actionDone = false;
+
+  while(state.hands[next].length < 3 && countOwnedPieces(next) + state.hands[next].length < 6){
+    state.hands[next].push(drawCardForSide(next, state));
+  }
+
+  if(skipFrozenTurnIfNeeded(next)){
+    renderAndSync("endTurnFrozen");
+    return;
+  }
+
+  setLog(`${next === "red" ? "紅方" : "藍方"}回合開始。`);
+  renderAndSync("endTurn");
+}
+
+function highlight(){
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove("selectedCell", "moveCell", "attackCell", "placeCell", "shieldTargetCell", "dragShieldCell", "chariotMoveCell", "dragNukeArea", "dragNukeCenter", "dragTrapArea", "dragTrapCenter", "dragMoveTarget", "dragAttackTarget", "dragPlaceTarget");
+    cell.removeAttribute("data-moves-left");
+  });
+
+  if(state.selectedPiece){
+    const {side, idx: cellIdx} = state.selectedPiece;
+    const selected = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(selected) selected.classList.add("selectedCell");
+
+    const p = state.boards[side][cellIdx];
+
+    if(p && p.type === SWORD){
+      getSwordMoves(side, cellIdx).forEach(m => {
+        const cell = document.querySelector(`[data-side="${m.side}"][data-idx="${m.idx}"]`);
+        if(cell) cell.classList.add("moveCell");
+      });
+      getSwordAttacks(side, cellIdx).forEach(a => {
+        const cell = document.querySelector(`[data-side="${a.side}"][data-idx="${a.idx}"]`);
+        if(cell) cell.classList.add("attackCell");
+      });
+    }
+
+    if(p && p.type === CHARIOT && p.cd === 0){
+      const remaining = 2 - (p.moveCount || 0);
+      getChariotMoves(side, cellIdx).forEach(m => {
+        const cell = document.querySelector(`[data-side="${m.side}"][data-idx="${m.idx}"]`);
+        if(cell){
+          cell.classList.add("moveCell", "chariotMoveCell");
+          cell.dataset.movesLeft = remaining;
+        }
+      });
+    }
+
+    if(p && p.type === BOW && p.cd === 0){
+      getBowTargets(side, cellIdx).forEach(t => {
+        const cell = document.querySelector(`[data-side="${t.side}"][data-idx="${t.idx}"]`);
+        if(cell) cell.classList.add("attackCell");
+      });
+    }
+  }
+
+  if(state.selectedCard){
+    const cur = state.turn;
+    const card = state.selectedCard.card;
+
+    for(let i = 0; i < 25; i++){
+      const cell = document.querySelector(`[data-side="${cur}"][data-idx="${i}"]`);
+      if(!cell) continue;
+
+      if(card.type === SHIELD){
+        if(canApplyDraggedShield(cur, i)) cell.classList.add("shieldTargetCell");
+        continue;
+      }
+
+      if(card.type === NUKE){
+        const enemySide = enemy(cur);
+        const nukeCell = document.querySelector(`[data-side="${enemySide}"][data-idx="${i}"]`);
+        if(nukeCell) nukeCell.classList.add("attackCell");
+        continue;
+      }
+
+      if(card.type === TRAP){
+        ["red","blue"].forEach(trapSide => {
+          const trapCell = document.querySelector(`[data-side="${trapSide}"][data-idx="${i}"]`);
+          if(trapCell) trapCell.classList.add("trapPlaceCell");
+        });
+        continue;
+      }
+
+      if(state.boards[cur][i]) continue;
+
+      let valid = true;
+      if((card.type === SWORD || card.type === CHARIOT) && col(i) !== backCol(cur)) valid = false;
+
+      if(valid) cell.classList.add("placeCell");
+    }
+  }
+}
+
+
+function clearDragPreview(){
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove("dragShieldCell", "dragNukeCenter", "dragNukeArea", "dragTrapArea", "dragTrapCenter", "dragMoveTarget", "dragAttackTarget");
+  });
+}
+
+function updateDragPreview(side, cellIdx){
+  clearDragPreview();
+
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+
+    if(card.type === SHIELD){
+      if(canApplyDraggedShield(side, cellIdx)){
+        const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+        if(cell) cell.classList.add("dragShieldCell");
+        return true;
+      }
+      return false;
+    }
+
+    if(card.type === NUKE){
+      if(side !== enemy(state.turn)) return false;
+      markNukePreview(side, cellIdx);
+      return true;
+    }
+
+    if(card.type === TRAP){
+      markTrapPreview(side, cellIdx);
+      return true;
+    }
+
+    if(card.type === SWORD || card.type === CHARIOT || card.type === BOW){
+      const oldSelected = state.selectedCard;
+      state.selectedCard = { side: state.turn, ci: state.draggingCard.ci, card };
+      highlight();
+      state.selectedCard = oldSelected;
+
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+      return !!(cell && cell.classList.contains("placeCell"));
+    }
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p) return false;
+
+    let valid = false;
+
+    if(p.type === SWORD){
+      valid = getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx) ||
+              getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx);
+    }
+
+    if(p.type === CHARIOT){
+      valid = getChariotMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+    }
+
+    if(p.type === BOW){
+      valid = getBowTargets(drag.side, drag.idx).some(t => t.side === side && t.idx === cellIdx);
+    }
+
+    if(valid){
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+      if(cell){
+        if(p.type === BOW) cell.classList.add("dragAttackTarget");
+        else cell.classList.add("dragMoveTarget");
+      }
+    }
+
+    return valid;
+  }
+
+  return false;
+}
+
+function markNukePreview(side, centerIdx){
+  for(let r = row(centerIdx)-1; r <= row(centerIdx)+1; r++){
+    for(let c = col(centerIdx)-1; c <= col(centerIdx)+1; c++){
+      if(r < 0 || r > 4 || c < 0 || c > 4) continue;
+      const targetIdx = idx(r,c);
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${targetIdx}"]`);
+      if(cell) cell.classList.add("dragNukeArea");
+    }
+  }
+
+  const center = document.querySelector(`[data-side="${side}"][data-idx="${centerIdx}"]`);
+  if(center) center.classList.add("dragNukeCenter");
+}
+
+
+
+
+function applyDragPreviewClasses(){
+  if(state.dragPreviewSide === null || state.dragPreviewIdx === null) return;
+
+  const side = state.dragPreviewSide;
+  const cellIdx = state.dragPreviewIdx;
+
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+
+    if(card.type === NUKE && side === enemy(state.turn)){
+      markNukePreview(side, cellIdx);
+      return;
+    }
+
+    if(card.type === TRAP){
+      markTrapPreview(side, cellIdx);
+      return;
+    }
+
+    const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(!cell) return;
+
+    if(card.type === SHIELD && canApplyDraggedShield(side, cellIdx)){
+      cell.classList.add("dragShieldCell");
+    }else if(isCurrentDropValid(side, cellIdx)){
+      cell.classList.add("dragPlaceTarget");
+    }
+  }
+
+  if(state.draggingPiece){
+    const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(!cell) return;
+
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p) return;
+
+    if(isCurrentDropValid(side, cellIdx)){
+      if(p.type === BOW || getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx)){
+        cell.classList.add("dragAttackTarget");
+      }else{
+        cell.classList.add("dragMoveTarget");
+      }
+    }
+  }
+}
+
+function handleDragPreview(side, cellIdx){
+  const changed = state.dragPreviewSide !== side || state.dragPreviewIdx !== cellIdx;
+  state.dragPreviewSide = side;
+  state.dragPreviewIdx = cellIdx;
+  if(changed) render();
+  return isCurrentDropValid(side, cellIdx);
+}
+
+function isCurrentDropValid(side, cellIdx){
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+    const cur = state.turn;
+
+    if(card.type === SHIELD){
+      return canApplyDraggedShield(side, cellIdx);
+    }
+
+    if(card.type === NUKE){
+      return side === enemy(cur);
+    }
+
+    if(card.type === TRAP){
+      return true;
+    }
+
+    if(side !== cur) return false;
+    if(state.boards[side][cellIdx]) return false;
+
+    if((card.type === SWORD || card.type === CHARIOT) && col(cellIdx) !== backCol(cur)){
+      return false;
+    }
+
+    return true;
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p || p.owner !== state.turn || p.cd > 0) return false;
+
+    if(p.type === SWORD){
+      return getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx) ||
+             getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx);
+    }
+
+    if(p.type === CHARIOT){
+      return getChariotMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+    }
+
+    if(p.type === BOW){
+      return getBowTargets(drag.side, drag.idx).some(t => t.side === side && t.idx === cellIdx);
+    }
+  }
+
+  return false;
+}
+
+function handleDropOnCell(side, cellIdx){
+  if(state.draggingCard){
+    const drag = state.draggingCard;
+    state.selectedCard = { side: drag.side, ci: drag.ci, card: drag.card };
+
+    if(!isCurrentDropValid(side, cellIdx)){
+      setLog("這個位置不能放。");
+      state.draggingCard = null;
+      state.dragPreviewSide = null;
+      state.dragPreviewIdx = null;
+      render();
+      return;
+    }
+
+    state.dropHandled = true;
+    state.draggingCard = null;
+    state.dragPreviewSide = null;
+    state.dragPreviewIdx = null;
+
+    if(drag.card.type === SHIELD){
+      applyShieldCard(side, cellIdx);
+    }else if(drag.card.type === NUKE){
+      useNukeCard(side, cellIdx);
+    }else if(drag.card.type === TRAP){
+      placeTrapCard(side, cellIdx);
+    }else{
+      placeCard(side, cellIdx);
+    }
+
+    return;
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+
+    if(!p || !isCurrentDropValid(side, cellIdx)){
+      setLog("這個位置不能拖曳。");
+      state.draggingPiece = null;
+      state.dragPreviewSide = null;
+      state.dragPreviewIdx = null;
+      render();
+      return;
+    }
+
+    state.dropHandled = true;
+    state.draggingPiece = null;
+    state.dragPreviewSide = null;
+    state.dragPreviewIdx = null;
+    state.selectedPiece = { side: drag.side, idx: drag.idx };
+
+    if(p.type === SWORD){
+      const isMove = getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+      if(isMove) moveSword(drag.side, drag.idx, side, cellIdx);
+      else attackPiece(drag.side, drag.idx, side, cellIdx);
+    }else if(p.type === CHARIOT){
+      moveChariot(drag.side, drag.idx, side, cellIdx);
+    }else if(p.type === BOW){
+      attackPiece(drag.side, drag.idx, side, cellIdx);
+    }
+  }
+}
+
+function setLog(msg){
+  document.getElementById("log").textContent = msg;
+}
+
+
+function wrapOnlineSync(){
+  // 各動作已直接同步到 Firebase。
+}
+
+document.getElementById("endTurnBtn").addEventListener("click", endTurn);
+setupOnlineButtons();
+wrapOnlineSync();
+render();
+
+// ── 手機版改為上下排列，不需 scale；桌機版也不 scale ──
+function scaleBattleField(){
+  const bf = document.querySelector(".battleField");
+  if(!bf) return;
+  bf.style.transform = "";
+  bf.style.marginBottom = "";
+}
+
+scaleBattleField();
+window.addEventListener("resize", scaleBattleField);
+// render 後也重新 scale
+const _origRender = render;
+render = function(){ _origRender.apply(this, arguments); scaleBattleField(); };
+</script>
+</body>
+</html>
