@@ -5075,3 +5075,250 @@ button {
   color: rgba(222,236,255,.7);
   line-height: 1.8;
 }
+
+/* =========================================================
+   功能3：結束回合按鈕 — 移入 river
+   ========================================================= */
+
+.riverEndTurnBtn {
+  display: block;
+  margin-top: 14px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 1000;
+  letter-spacing: .06em;
+  line-height: 1.3;
+  text-align: center;
+  color: #382000;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.25), transparent 28%),
+    linear-gradient(135deg, #fff1a8, #f1b53a 58%, #9b5b16);
+  text-shadow: 0 1px 0 rgba(255,255,255,.45);
+  box-shadow: 0 6px 18px rgba(0,0,0,.32);
+  width: 80px;
+  transition: filter .14s, transform .14s;
+}
+
+.riverEndTurnBtn:hover {
+  filter: brightness(1.14);
+  transform: translateY(-2px);
+}
+
+.riverEndTurnBtn.turnAlert {
+  animation: endTurnPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes endTurnPulse {
+  0%, 100% { box-shadow: 0 6px 18px rgba(0,0,0,.32), 0 0 0 0 rgba(241,181,58,.0); }
+  50%       { box-shadow: 0 6px 22px rgba(0,0,0,.40), 0 0 14px 4px rgba(241,181,58,.55); }
+}
+
+/* =========================================================
+   功能1：加入房間 Toast
+   ========================================================= */
+
+.joinToast {
+  position: fixed;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  z-index: 8000;
+  padding: 13px 28px;
+  border-radius: 0;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  color: #edf6ff;
+  background: rgba(12, 28, 55, .94);
+  border: 1px solid rgba(243, 211, 122, .35);
+  box-shadow: 0 8px 32px rgba(0,0,0,.45);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform .35s cubic-bezier(.2,1,.3,1), opacity .35s ease;
+  white-space: nowrap;
+}
+
+.joinToastShow {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.joinToast--success { border-color: rgba(99,255,180,.40); }
+.joinToast--info    { border-color: rgba(99,173,255,.40); }
+
+/* =========================================================
+   功能2：規則 Modal
+   ========================================================= */
+
+.rulesToggleWrap {
+  display: flex;
+  justify-content: center;
+  margin: 18px 0 32px;
+}
+
+.rulesToggleBtn {
+  padding: 11px 32px;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--gold-3);
+  background: rgba(12, 22, 43, .72);
+  border: 1px solid rgba(243,211,122,.35);
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+  cursor: pointer;
+  transition: filter .15s, transform .15s;
+}
+
+.rulesToggleBtn:hover {
+  filter: brightness(1.18);
+  transform: translateY(-2px);
+}
+
+/* Backdrop */
+.rulesModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 7000;
+  align-items: center;
+  justify-content: center;
+}
+
+.rulesModal.rulesModalOpen {
+  display: flex;
+}
+
+.rulesModalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 10, 24, .72);
+  backdrop-filter: blur(4px);
+  animation: backdropFadeIn .25s ease;
+}
+
+@keyframes backdropFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.rulesModalBox {
+  position: relative;
+  z-index: 1;
+  width: min(700px, 92vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 32px 36px 28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01)),
+    rgba(10, 20, 42, .96);
+  border: 1px solid rgba(243,211,122,.30);
+  clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 20px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px);
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+  animation: modalSlideIn .3s cubic-bezier(.2,1,.3,1);
+}
+
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(24px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);    }
+}
+
+.rulesModalClose {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: rgba(222,236,255,.55);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color .15s;
+}
+.rulesModalClose:hover { color: #fff; }
+
+.rulesModalTitle {
+  font-size: 22px;
+  font-weight: 1000;
+  letter-spacing: .14em;
+  color: var(--gold-3);
+  text-align: center;
+  margin-bottom: 22px;
+  text-shadow: 0 0 14px rgba(243,211,122,.4);
+}
+
+.rulesModalContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 600px) {
+  .rulesModalContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* rulesBlock / rulesRow 複用原有樣式即可，小幅調整 */
+.rulesModalContent .rulesBlock {
+  background: rgba(6,14,30,.45);
+  border: 1px solid rgba(243,211,122,.14);
+  padding: 16px 18px;
+}
+
+.rulesModalContent .rulesTitle {
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.rulesModalContent .rulesRow {
+  font-size: 13px;
+  line-height: 1.65;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.rulesModalContent .rulesIcon {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  color: var(--gold);
+}
+
+/* =========================================================
+   功能4：攻擊箭頭動畫
+   ========================================================= */
+
+.attackArrow {
+  position: absolute;
+  height: 3px;
+  transform-origin: left center;
+  pointer-events: none;
+  z-index: 5000;
+  background: linear-gradient(90deg, transparent, var(--arrow-color, rgba(255,120,140,.55)) 40%, var(--arrow-color, rgba(255,120,140,.55)));
+  border-radius: 2px;
+  animation: arrowFly .55s ease-out forwards;
+}
+
+.attackArrow::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 10px solid var(--arrow-color, rgba(255,120,140,.55));
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+}
+
+@keyframes arrowFly {
+  0%   { opacity: 0; clip-path: inset(0 100% 0 0); }
+  15%  { opacity: 1; }
+  70%  { opacity: 1; clip-path: inset(0 0% 0 0); }
+  100% { opacity: 0; clip-path: inset(0 0% 0 0); }
+}
