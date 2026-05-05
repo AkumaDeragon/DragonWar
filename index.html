@@ -98,16 +98,22 @@
     <section id="log" class="log">歡迎！紅方先手。可單機遊玩，也可建立房間線上對戰。</section>
 
     <section class="rules">
-      <b>規則：</b>
-      劍：只能往敵方方向前進一格；到前線後可跨河；跨河後可往敵方底線方向、上、下各一格。<br>
-      弓箭：射同一橫列的「第一個敵人」，會跳過自己人；如果敵人有護盾，會先消耗 1 層護盾。<br>
-      車：一回合可移動兩次，每次一格，可前後上下（小十字），不能斜走；兩次走完後充能 3 回合。<br>
-      盾：不再佔場上格子，改成附身在棋子身上；可以疊加，數字代表可擋幾次。<br>
-      核彈：指定一格中心，摧毀 3x3 範圍；有護盾先扣盾，沒盾直接消失。<br>
-      陷阱：每位玩家整局只有 1 張；拖曳指定一格後設置上中下 3 格；只會擋車，其他棋子會當作不存在。<br>
-      技能抽卡：紅藍雙方各自有獨立技能區；每位玩家累積 2 次自己的回合後，可轉一次 20% 技能輪盤；技能牌不佔手牌。<br>
-      凍結：敵方下一回合跳過。爆裂弓：下一次弓箭可射任意敵方棋子。<br>
-      勝利：劍跨河後走到敵方底線才獲勝。
+      <div class="rulesBlock">
+        <div class="rulesTitle">⚔️ 棋子規則</div>
+        <div class="rulesRow"><span class="rulesIcon">↗</span><span><b>劍</b>：只能往敵方方向前進一格；到前線後可跨河；跨河後可往敵方底線方向、上、下各一格。劍走到敵方底線獲勝。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">➹</span><span><b>弓箭</b>：射同一橫列的「第一個敵人」，會跳過自己人；敵人有護盾會先消耗 1 層護盾。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">車</span><span><b>車</b>：一回合可移動兩次，每次一格（前後上下），不能斜走；可踏過戰線殺死敵方棋子；走完兩次後充能 3 回合；遇到自己人不能走，遇到敵方陷阱不能走，自己陷阱不影響。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">⬟</span><span><b>盾</b>：附身在棋子身上，可疊加；數字代表可擋幾次傷害。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">☢</span><span><b>核彈</b>：指定一格為中心，摧毀 3x3 範圍；有護盾先扣盾，沒盾直接消失。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">✦</span><span><b>陷阱</b>：每位玩家整局只有 1 張；拖曳指定一格後設置上中下 3 格；只會擋車，其他棋子當作不存在。</span></div>
+      </div>
+      <div class="rulesBlock">
+        <div class="rulesTitle">✨ 技能系統</div>
+        <div class="rulesRow"><span class="rulesIcon">🔋</span><span><b>充能</b>：每位玩家累積 2 次自己的回合後，可轉一次 20% 技能輪盤。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">❄️</span><span><b>凍結</b>：施放後，敵方下一回合直接跳過。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">💥</span><span><b>爆裂弓</b>：施放後，下一次弓箭攻擊可射任意敵方棋子，不限同列。</span></div>
+        <div class="rulesRow"><span class="rulesIcon">🃏</span><span>技能牌不佔手牌格，獨立存放於技能區。</span></div>
+      </div>
     </section>
   </main>
 
@@ -647,9 +653,19 @@ function renderSkills(){
       (!online.enabled || online.playerSide === side);
 
     spinBtn.disabled = !canSpin;
-    spinBtn.textContent = spinning
-      ? `${side === "red" ? "紅方" : "藍方"}轉盤中...`
-      : (canSpin ? `${side === "red" ? "紅方" : "藍方"}抽技能！` : `${side === "red" ? "紅方" : "藍方"}未充能`);
+    const sideLabel = side === "red" ? "紅方" : "藍方";
+    const isMyButton = !online.enabled || online.playerSide === side;
+    if(spinning){
+      spinBtn.textContent = `${sideLabel}轉盤中...`;
+    } else if(canSpin){
+      spinBtn.textContent = `${sideLabel}抽技能！`;
+    } else if(isMyButton){
+      // 自己那側，顯示未充能原因
+      spinBtn.textContent = charge >= 2 ? `${sideLabel}等待回合` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    } else {
+      // 對方那側，只顯示充能狀態，不顯示「未充能」
+      spinBtn.textContent = charge >= 2 ? `${sideLabel}已充能` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    }
 
     wheelEl.style.transform = `rotate(${ui.angle || 0}deg)`;
     wheelEl.classList.toggle("isSpinning", spinning);
@@ -1054,8 +1070,17 @@ function renderTurn(){
   const label = document.getElementById("turnLabel");
   const endBtn = document.getElementById("endTurnBtn");
 
-  label.className = `turnLabel ${state.turn === "red" ? "redTurn" : "blueTurn"}`;
-  label.textContent = state.gameOver ? "遊戲結束" : `${state.turn === "red" ? "紅方" : "藍方"}回合`;
+  const newClass = `turnLabel ${state.turn === "red" ? "redTurn" : "blueTurn"}`;
+  const newText = state.gameOver ? "遊戲結束" : `${state.turn === "red" ? "紅方" : "藍方"}回合`;
+
+  // 只在文字或顏色真的有變化時才播動畫
+  if(label.textContent !== newText || label.className !== newClass){
+    label.classList.add("turnLabelFlip");
+    label.addEventListener("animationend", () => label.classList.remove("turnLabelFlip"), { once: true });
+  }
+
+  label.className = newClass + (label.className.includes("turnLabelFlip") ? " turnLabelFlip" : "");
+  label.textContent = newText;
 
   if(endBtn){
     const canEnd = !online.enabled || online.playerSide === state.turn;
@@ -1374,9 +1399,15 @@ function getChariotMoves(fromSide, fromIdx){
 
     if(cc >= 0 && cc <= 4){
       const targetIdx = idx(rr, cc);
-      if(!state.boards[fromSide][targetIdx] && !hasEnemyTrapForChariot(p.owner, fromSide, targetIdx)){
-        moves.push({side: fromSide, idx: targetIdx});
+      const occupant = state.boards[fromSide][targetIdx];
+      const blocked = hasEnemyTrapForChariot(p.owner, fromSide, targetIdx);
+      if(blocked) return; // 陷阱擋住
+      if(!occupant){
+        moves.push({side: fromSide, idx: targetIdx}); // 空格，移動
+      } else if(occupant.owner !== p.owner){
+        moves.push({side: fromSide, idx: targetIdx}); // 有敵人，可以殺
       }
+      // 有自己人則跳過
       return;
     }
 
@@ -1386,7 +1417,9 @@ function getChariotMoves(fromSide, fromIdx){
       const over = cc - 5;
       if(over >= 0 && over <= 4){
         const targetIdx = idx(rr, over);
-        if(!state.boards[targetSide][targetIdx] && !hasEnemyTrapForChariot(p.owner, targetSide, targetIdx)){
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
           moves.push({side: targetSide, idx: targetIdx});
         }
       }
@@ -1396,7 +1429,9 @@ function getChariotMoves(fromSide, fromIdx){
       const over = 5 + cc;
       if(over >= 0 && over <= 4){
         const targetIdx = idx(rr, over);
-        if(!state.boards[targetSide][targetIdx] && !hasEnemyTrapForChariot(p.owner, targetSide, targetIdx)){
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
           moves.push({side: targetSide, idx: targetIdx});
         }
       }
@@ -1433,6 +1468,11 @@ function moveChariot(fromSide, fromIdx, toSide, toIdx){
   const movedTimes = p.moveCount || 0;
 
   state.boards[fromSide][fromIdx] = null;
+  const victim = state.boards[toSide][toIdx];
+  if(victim && victim.owner !== p.owner){
+    setLog(`車殲滅了敵方的${CARD_NAMES[victim.type] || victim.type}！`);
+    state.actionDone = true;
+  }
   state.boards[toSide][toIdx] = {
     ...p,
     moveCount: movedTimes + 1
