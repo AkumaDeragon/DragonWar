@@ -69,6 +69,7 @@
       <section class="river">
         <span>戰</span>
         <span>線</span>
+        <button id="endTurnBtn" class="bottomEndTurnBtn riverEndTurnBtn">結束<br>回合</button>
       </section>
 
       <section class="sidePanel bluePanel">
@@ -99,32 +100,42 @@
       </section>
     </section>
 
-    
-    <section class="bottomActionBar">
-      <button id="endTurnBtn" class="bottomEndTurnBtn">結束回合</button>
-    </section>
-
     <section id="log" class="log">歡迎！紅方先手。可單機遊玩，也可建立房間線上對戰。</section>
 
-    <section class="rules">
-      <div class="rulesBlock">
-        <div class="rulesTitle">⚔️ 棋子規則</div>
-        <div class="rulesRow"><span class="rulesIcon">↗</span><span><b>劍</b>：只能往敵方方向前進一格；到前線後可跨河；跨河後可往敵方底線方向、上、下各一格。劍走到敵方底線獲勝。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">➹</span><span><b>弓箭</b>：射同一橫列的「第一個敵人」，會跳過自己人；敵人有護盾會先消耗 1 層護盾。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">車</span><span><b>車</b>：一回合可移動兩次，每次一格（前後上下），不能斜走；可踏過戰線殺死敵方棋子；走完兩次後充能 3 回合；遇到自己人不能走，遇到敵方陷阱不能走，自己陷阱不影響。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">⬟</span><span><b>盾</b>：附身在棋子身上，可疊加；數字代表可擋幾次傷害。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">☢</span><span><b>核彈</b>：指定一格為中心，摧毀 3x3 範圍；有護盾先扣盾，沒盾直接消失。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">✦</span><span><b>陷阱</b>：每位玩家整局只有 1 張；拖曳指定一格後設置上中下 3 格；只會擋車，其他棋子當作不存在。</span></div>
+    <!-- 規則按鈕 -->
+    <div class="rulesToggleWrap">
+      <button id="rulesToggleBtn" class="rulesToggleBtn" type="button">📖 查看規則</button>
+    </div>
+
+    <!-- 規則 Modal -->
+    <div id="rulesModal" class="rulesModal" aria-hidden="true">
+      <div class="rulesModalBackdrop" id="rulesModalBackdrop"></div>
+      <div class="rulesModalBox">
+        <button class="rulesModalClose" id="rulesModalClose" type="button">✕</button>
+        <div class="rulesModalTitle">物原戰爭 — 規則</div>
+        <div class="rulesModalContent">
+          <div class="rulesBlock">
+            <div class="rulesTitle">⚔️ 棋子規則</div>
+            <div class="rulesRow"><span class="rulesIcon">↗</span><span><b>劍</b>：只能往敵方方向前進一格；到前線後可跨河；跨河後可往敵方底線方向、上、下各一格。劍走到敵方底線獲勝。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">➹</span><span><b>弓箭</b>：射同一橫列的「第一個敵人」，會跳過自己人；敵人有護盾會先消耗 1 層護盾。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">車</span><span><b>車</b>：一回合可移動兩次，每次一格（前後上下），不能斜走；可踏過戰線殺死敵方棋子；走完兩次後充能 3 回合；遇到自己人不能走，遇到敵方陷阱不能走，自己陷阱不影響。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">⬟</span><span><b>盾</b>：附身在棋子身上，可疊加；數字代表可擋幾次傷害。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">☢</span><span><b>核彈</b>：指定一格為中心，摧毀 3x3 範圍；有護盾先扣盾，沒盾直接消失。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">✦</span><span><b>陷阱</b>：每位玩家整局只有 1 張；拖曳指定一格後設置上中下 3 格；只會擋車，其他棋子當作不存在。</span></div>
+          </div>
+          <div class="rulesBlock">
+            <div class="rulesTitle">✨ 技能系統</div>
+            <div class="rulesRow"><span class="rulesIcon">🔋</span><span><b>充能</b>：每位玩家累積 2 次自己的回合後，可轉一次 20% 技能輪盤。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">❄️</span><span><b>凍結</b>：施放後，敵方下一回合直接跳過。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">💥</span><span><b>爆裂弓</b>：施放後，下一次弓箭攻擊可射任意敵方棋子，不限同列。</span></div>
+            <div class="rulesRow"><span class="rulesIcon">🃏</span><span>技能牌不佔手牌格，獨立存放於技能區。</span></div>
+          </div>
+        </div>
       </div>
-      <div class="rulesBlock">
-        <div class="rulesTitle">✨ 技能系統</div>
-        <div class="rulesRow"><span class="rulesIcon">🔋</span><span><b>充能</b>：每位玩家累積 2 次自己的回合後，可轉一次 20% 技能輪盤。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">❄️</span><span><b>凍結</b>：施放後，敵方下一回合直接跳過。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">💥</span><span><b>爆裂弓</b>：施放後，下一次弓箭攻擊可射任意敵方棋子，不限同列。</span></div>
-        <div class="rulesRow"><span class="rulesIcon">🃏</span><span>技能牌不佔手牌格，獨立存放於技能區。</span></div>
-      </div>
-    </section>
-  </main>
+    </div>
+
+    <!-- 加入房間 Toast 提示 -->
+    <div id="joinToast" class="joinToast" aria-live="polite"></div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -2063,6 +2074,122 @@ function wrapOnlineSync(){
 }
 
 document.getElementById("endTurnBtn").addEventListener("click", endTurn);
+
+// ══════════════════════════════════════════
+//  功能1：加入房間 Toast 動畫提示
+// ══════════════════════════════════════════
+function showJoinToast(msg, type = "success"){
+  const toast = document.getElementById("joinToast");
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.className = "joinToast joinToastShow joinToast--" + type;
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("joinToastShow");
+  }, 3200);
+}
+
+// 攔截 updateOnlineStatus，在加入/建立房間時觸發 toast
+const _origUpdateStatus = updateOnlineStatus;
+updateOnlineStatus = function(message){
+  _origUpdateStatus.apply(this, arguments);
+  if(!message) return;
+  if(message.includes("房間建立")){
+    showJoinToast("✅ 房間已建立，等待對手加入...", "success");
+  } else if(message.includes("已加入房間")){
+    showJoinToast("🎮 已加入房間！準備開始", "success");
+  } else if(message.includes("已離開")){
+    showJoinToast("👋 已離開房間", "info");
+  }
+};
+
+// 對手加入時也提示（攔截 setLog）
+const _origSetLog = setLog;
+setLog = function(msg){
+  _origSetLog.apply(this, arguments);
+  if(msg && msg.includes("藍方已加入")){
+    showJoinToast("🎮 對手已加入！遊戲開始", "success");
+  } else if(msg && msg.includes("對手已離開")){
+    showJoinToast("⚠️ 對手已離開房間", "info");
+  }
+};
+
+// ══════════════════════════════════════════
+//  功能2：規則 Modal
+// ══════════════════════════════════════════
+const rulesModal = document.getElementById("rulesModal");
+const rulesToggleBtn = document.getElementById("rulesToggleBtn");
+const rulesModalClose = document.getElementById("rulesModalClose");
+const rulesModalBackdrop = document.getElementById("rulesModalBackdrop");
+
+function openRulesModal(){
+  rulesModal.classList.add("rulesModalOpen");
+  rulesModal.setAttribute("aria-hidden", "false");
+}
+function closeRulesModal(){
+  rulesModal.classList.remove("rulesModalOpen");
+  rulesModal.setAttribute("aria-hidden", "true");
+}
+
+if(rulesToggleBtn) rulesToggleBtn.addEventListener("click", openRulesModal);
+if(rulesModalClose) rulesModalClose.addEventListener("click", closeRulesModal);
+if(rulesModalBackdrop) rulesModalBackdrop.addEventListener("click", closeRulesModal);
+
+// ══════════════════════════════════════════
+//  功能4：攻擊方向箭頭動畫（純視覺，不影響遊戲）
+// ══════════════════════════════════════════
+function spawnAttackArrow(fromSide, fromIdx, toSide, toIdx){
+  // 取得格子 DOM
+  const fromCell = document.querySelector(`[data-side="${fromSide}"][data-idx="${fromIdx}"]`);
+  const toCell   = document.querySelector(`[data-side="${toSide}"][data-idx="${toIdx}"]`);
+  if(!fromCell || !toCell) return;
+
+  const fromR = fromCell.getBoundingClientRect();
+  const toR   = toCell.getBoundingClientRect();
+
+  const x1 = fromR.left + fromR.width  / 2;
+  const y1 = fromR.top  + fromR.height / 2;
+  const x2 = toR.left   + toR.width    / 2;
+  const y2 = toR.top    + toR.height   / 2;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  const arrow = document.createElement("div");
+  arrow.className = "attackArrow";
+  arrow.style.cssText = `
+    left: ${x1 + window.scrollX}px;
+    top:  ${y1 + window.scrollY}px;
+    width: ${len}px;
+    transform: rotate(${angle}deg);
+    --arrow-color: ${fromSide === "red" ? "rgba(255,80,100,.55)" : "rgba(80,160,255,.55)"};
+  `;
+  document.body.appendChild(arrow);
+
+  // 移除
+  arrow.addEventListener("animationend", () => arrow.remove());
+}
+
+// 攔截 attackPiece 加入箭頭動畫
+const _origAttackPiece = attackPiece;
+attackPiece = function(fromSide, fromIdx, targetSide, targetIdx){
+  spawnAttackArrow(fromSide, fromIdx, targetSide, targetIdx);
+  _origAttackPiece.apply(this, arguments);
+};
+
+// chariot 踏過戰線攻擊也加（在 moveChariot 裡）
+const _origMoveChariot = moveChariot;
+moveChariot = function(fromSide, fromIdx, toSide, toIdx){
+  // 如果跨邊就是攻擊
+  if(fromSide !== toSide){
+    spawnAttackArrow(fromSide, fromIdx, toSide, toIdx);
+  }
+  _origMoveChariot.apply(this, arguments);
+};
+
+
 setupOnlineButtons();
 wrapOnlineSync();
 render();
