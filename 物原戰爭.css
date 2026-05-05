@@ -5322,3 +5322,44 @@ button {
   70%  { opacity: 1; clip-path: inset(0 0% 0 0); }
   100% { opacity: 0; clip-path: inset(0 0% 0 0); }
 }
+
+/* =========================================================
+   結束回合：river 正下方中間欄
+   ========================================================= */
+
+/* battleField 改成兩排：第一排是主戰場，第二排只有中間欄 */
+.battleField {
+  grid-template-rows: auto auto;
+}
+
+.riverBelowEndTurn {
+  grid-column: 2;  /* 中間欄 */
+  grid-row: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 14px;
+}
+
+/* river 本身只佔第一排 */
+.river {
+  grid-row: 1;
+}
+
+.redPanel, .bluePanel {
+  grid-row: 1;
+}
+
+/* =========================================================
+   turnLabel 固定置頂
+   ========================================================= */
+
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 6000;
+  background: rgba(7, 16, 31, .88);
+  backdrop-filter: blur(10px);
+  padding: 10px 0;
+  margin-bottom: 16px;
+}
