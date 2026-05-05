@@ -112,50 +112,43 @@
   </main>
 
 
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA9BNqsqhmq9jzhrrAtaCSGje-mHeTyp5c",
-  authDomain: "dragonwar-eceef.firebaseapp.com",
-  databaseURL: "https://dragonwar-eceef-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "dragonwar-eceef",
-  storageBucket: "dragonwar-eceef.firebasestorage.app",
-  messagingSenderId: "471239542703",
-  appId: "1:471239542703:web:2c875f3a49c663388f915a",
-  measurementId: "G-ZEN6WQEHHN"
-};
+// ═══════════════════════════════════════════════════════
+//  Supabase 聯機同步層
+//  原理：用 Supabase Realtime Broadcast 傳 JSON 字串
+//        JSON.stringify 保留陣列格式，不會被資料庫破壞
+// ═══════════════════════════════════════════════════════
 
-let firebaseApp = null;
-let firebaseDb = null;
+const SUPABASE_URL = "https://hoglrqbfgsfucgeuueol.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rF2UgXFQw1aZNS7FgUFsCg_B0gGR2EB";
+
+let sbClient = null;
+let sbChannel = null;
+
 let online = {
   enabled: false,
   roomCode: null,
   playerSide: null,
   playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
-  roomRef: null,
-  isApplyingRemote: false,
-  lastPushedAt: 0   // 記錄最近一次自己 push 的時間戳，用來辨別 Firebase 回彈
+  isApplyingRemote: false
 };
 
-
-function initFirebaseOnline(){
-  if(firebaseApp || typeof firebase === "undefined") return;
-  firebaseApp = firebase.initializeApp(firebaseConfig);
-  firebaseDb = firebase.database();
+function initSupabase(){
+  if(sbClient) return;
+  sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 }
 
 function makeRoomCode(){
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
-  for(let i = 0; i < 4; i++){
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
+  for(let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
   return code;
 }
 
+// ── 取得要同步的遊戲狀態（JSON 安全，保留陣列） ──
 function getPublicState(){
   return {
     turn: state.turn,
@@ -174,18 +167,9 @@ function getPublicState(){
   };
 }
 
-// ─────────────────────────────────────────────────────────
-// applyPublicState：收到對手的狀態更新，套用到本地
-// 唯一判斷：updatedBy === 自己 → 跳過（這是 Firebase 把自己的 push 回彈過來）
-// ─────────────────────────────────────────────────────────
+// ── 套用對手的狀態 ──
 function applyPublicState(remoteState){
   if(!remoteState) return;
-
-  // Firebase 把自己剛剛 push 的資料回彈給自己，直接跳過
-  const isSelf = remoteState.updatedBy === online.playerId;
-  console.log("[SYNC RECV]", "reason:", remoteState.reason, "turn:", remoteState.turn, "updatedBy:", remoteState.updatedBy, "myId:", online.playerId, "isSelf:", isSelf, "mySide:", online.playerSide);
-  if(isSelf) return;
-
   online.isApplyingRemote = true;
 
   state = {
@@ -200,33 +184,9 @@ function applyPublicState(remoteState){
     dropHandled: false
   };
 
-  // Firebase 會把空陣列存成 null，套用後必須還原成陣列
-  const fixArr = (v, len) => {
-    if(!v) return new Array(len).fill(null);
-    if(Array.isArray(v)) return v;
-    // Firebase 有時把陣列存成 {0:..., 1:...} 的物件
-    const maxKey = Math.max(...Object.keys(v).map(Number));
-    const arr = new Array(Math.max(len, maxKey + 1)).fill(null);
-    Object.entries(v).forEach(([k, val]) => { arr[Number(k)] = val; });
-    return arr;
-  };
-
-  if(state.boards){
-    if(state.boards.red) state.boards.red = fixArr(state.boards.red, 25);
-    if(state.boards.blue) state.boards.blue = fixArr(state.boards.blue, 25);
-  }
-  if(state.hands){
-    if(state.hands.red && !Array.isArray(state.hands.red)) state.hands.red = fixArr(state.hands.red, 0);
-    if(state.hands.blue && !Array.isArray(state.hands.blue)) state.hands.blue = fixArr(state.hands.blue, 0);
-  }
   if(!state.traps) state.traps = { red: [], blue: [] };
-  if(state.traps){
-    if(!Array.isArray(state.traps.red)) state.traps.red = state.traps.red ? fixArr(state.traps.red, 0) : [];
-    if(!Array.isArray(state.traps.blue)) state.traps.blue = state.traps.blue ? fixArr(state.traps.blue, 0) : [];
-  }
   if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
   ensureSkillState();
-
   render();
 
   if(remoteState.logText){
@@ -238,24 +198,24 @@ function applyPublicState(remoteState){
   online.isApplyingRemote = false;
 }
 
-// ─────────────────────────────────────────────────────────
-// syncPushGameState：把本地狀態推送到 Firebase
-// ─────────────────────────────────────────────────────────
+// ── 推送狀態給對手 ──
 function syncPushGameState(reason = "update"){
-  if(!online.enabled || !online.roomRef || online.isApplyingRemote) return Promise.resolve();
+  if(!online.enabled || !sbChannel || online.isApplyingRemote) return Promise.resolve();
 
   const payload = {
-    ...getPublicState(),
-    updatedAt: Date.now(),
-    updatedBy: online.playerId,
+    type: "gameState",
+    from: online.playerId,
+    state: getPublicState(),
     reason
   };
 
-  console.log("[SYNC PUSH]", "reason:", reason, "turn:", payload.turn, "myId:", online.playerId, "mySide:", online.playerSide);
-  return online.roomRef.child("gameState").set(payload).catch(err => {
-    console.error("syncPushGameState failed", err);
-    setLog("同步失敗，請重新整理或重新加入房間。");
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: payload
   });
+
+  return Promise.resolve();
 }
 
 function renderAndSync(reason = "update"){
@@ -280,166 +240,124 @@ function updateOnlineStatus(message){
 
   const sideText = online.playerSide === "red" ? "紅方" : online.playerSide === "blue" ? "藍方" : "觀戰";
   const turnText = state.turn === "red" ? "紅方" : "藍方";
-  const myTurn = online.playerSide === "spectator" ? "觀戰中，不能操作" : (online.playerSide === state.turn ? "輪到你" : "等待對手");
+  const myTurn = online.playerSide === "spectator" ? "觀戰中，不能操作" :
+                 (online.playerSide === state.turn ? "✅ 輪到你" : "⏳ 等待對手");
 
-  el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜目前${turnText}回合｜${myTurn}`;
+  el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜${myTurn}`;
 }
 
-// ─────────────────────────────────────────────────────────
-// createOnlineRoom：建立房間
-// ─────────────────────────────────────────────────────────
+// ── 建立房間（紅方） ──
 async function createOnlineRoom(){
-  try{
-    initFirebaseOnline();
+  initSupabase();
+  const code = makeRoomCode();
 
-    const code = makeRoomCode();
-    const ref = firebaseDb.ref("rooms/" + code);
-    const snap = await ref.get();
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
 
-    if(snap.exists()){
-      return createOnlineRoom();
-    }
-
-    state = createInitialState ? createInitialState() : state;
-    state.turn = "red";
-    state.actionDone = false;
-    state.gameOver = false;
-
-    const initialState = {
-      ...getPublicState(),
-      updatedAt: Date.now(),
-      updatedBy: online.playerId,
-      reason: "create"
-    };
-
-    await ref.set({
-      createdAt: Date.now(),
-      players: { red: online.playerId, blue: null },
-      gameState: initialState
-    });
-
-    enterOnlineRoom(code, "red", ref);
-  }catch(err){
-    console.error(err);
-    updateOnlineStatus("建立房間失敗，請確認 Realtime Database 已開啟。");
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-// joinOnlineRoom：加入房間
-// ─────────────────────────────────────────────────────────
-async function joinOnlineRoom(){
-  try{
-    initFirebaseOnline();
-
-    const input = document.getElementById("roomCodeInput");
-    const code = (input && input.value ? input.value : "").trim().toUpperCase();
-
-    if(!code){
-      updateOnlineStatus("請先輸入房間碼。");
-      return;
-    }
-
-    const ref = firebaseDb.ref("rooms/" + code);
-    const snap = await ref.get();
-
-    if(!snap.exists()){
-      updateOnlineStatus("找不到這個房間。");
-      return;
-    }
-
-    const data = snap.val() || {};
-    const players = data.players || {};
-    let joinedSide = null;
-
-    if(players.red === online.playerId){
-      joinedSide = "red";
-    }else{
-      joinedSide = "blue";
-      await ref.child("players/blue").set(online.playerId);
-    }
-
-    // 加入時立刻把 Firebase 上的遊戲狀態套入本地
-    if(data.gameState){
-      const gs = data.gameState;
-      state = {
-        ...state,
-        ...gs,
-        selectedPiece: null, selectedCard: null,
-        draggingCard: null, draggingPiece: null,
-        dragPreviewSide: null, dragPreviewIdx: null, dropHandled: false
-      };
-      if(!state.traps) state.traps = { red: [], blue: [] };
-      if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
-      // Firebase null 陣列修正
-      const fx = (v, len) => { if(!v) return new Array(len).fill(null); if(Array.isArray(v)) return v; const mk = Math.max(...Object.keys(v).map(Number)); const a = new Array(Math.max(len,mk+1)).fill(null); Object.entries(v).forEach(([k,val])=>{a[Number(k)]=val;}); return a; };
-      if(state.boards){ state.boards.red = fx(state.boards.red,25); state.boards.blue = fx(state.boards.blue,25); }
-      if(state.hands){ if(!Array.isArray(state.hands.red)) state.hands.red = fx(state.hands.red,0); if(!Array.isArray(state.hands.blue)) state.hands.blue = fx(state.hands.blue,0); }
-      if(state.traps){ if(!Array.isArray(state.traps.red)) state.traps.red = fx(state.traps.red,0); if(!Array.isArray(state.traps.blue)) state.traps.blue = fx(state.traps.blue,0); }
-      ensureSkillState();
-    }
-
-    enterOnlineRoom(code, joinedSide, ref);
-  }catch(err){
-    console.error(err);
-    updateOnlineStatus("加入房間失敗，請確認房間碼或資料庫設定。");
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-// enterOnlineRoom：設置 Firebase 監聽器
-// ─────────────────────────────────────────────────────────
-function enterOnlineRoom(code, side, ref){
-  // 先清除舊監聽器
-  if(online.roomRef){
-    online.roomRef.child("gameState").off();
-    online.roomRef.child("players").off();
-  }
+  state = createInitialState ? createInitialState() : state;
+  state.turn = "red";
+  state.actionDone = false;
+  state.gameOver = false;
 
   online.enabled = true;
   online.roomCode = code;
-  online.playerSide = side;
-  online.roomRef = ref;
+  online.playerSide = "red";
   online.isApplyingRemote = false;
 
   const input = document.getElementById("roomCodeInput");
   if(input) input.value = code;
 
-  // players 即時監聽（身份更新）
-  ref.child("players").on("value", snap => {
-    const players = snap.val() || {};
-    if(players.red === online.playerId) online.playerSide = "red";
-    else if(players.blue === online.playerId) online.playerSide = "blue";
-    updateOnlineStatus();
-    render();
+  // 建立 Supabase Realtime 頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }  // self:false = 自己送的不收到
   });
 
-  // gameState 即時監聽（對手操作）
-  // applyPublicState 內部會用 updatedBy 過濾自己的回彈
-  ref.child("gameState").on("value", snap => {
-    if(!snap.exists()) return;
-    applyPublicState(snap.val());
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "join"){
+      // 藍方加入，推送完整狀態給他
+      updateOnlineStatus();
+      render();
+      setTimeout(() => syncPushGameState("welcome"), 200);
+      setLog("藍方已加入！紅方回合開始。");
+    } else if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
   });
 
-  updateOnlineStatus();
+  await sbChannel.subscribe();
+
+  updateOnlineStatus(`房間建立！房間碼：${code}，等待對手加入...`);
   render();
 }
 
-function leaveOnlineRoom(){
-  if(online.roomRef){
-    online.roomRef.child("gameState").off();
-    online.roomRef.child("players").off();
+// ── 加入房間（藍方） ──
+async function joinOnlineRoom(){
+  initSupabase();
+
+  const input = document.getElementById("roomCodeInput");
+  const code = (input && input.value ? input.value : "").trim().toUpperCase();
+
+  if(!code){ updateOnlineStatus("請先輸入房間碼。"); return; }
+
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
+
+  online.enabled = true;
+  online.roomCode = code;
+  online.playerSide = "blue";
+  online.isApplyingRemote = false;
+
+  // 建立頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }
+  });
+
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
+  });
+
+  await sbChannel.subscribe();
+
+  // 通知紅方自己加入了
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: { type: "join", from: online.playerId }
+  });
+
+  updateOnlineStatus(`已加入房間 ${code}，等待紅方同步狀態...`);
+  render();
+}
+
+// ── 離開房間 ──
+async function leaveOnlineRoom(){
+  if(sbChannel){
+    sbChannel.send({
+      type: "broadcast",
+      event: "game",
+      payload: { type: "leave", from: online.playerId }
+    });
+    await sbClient.removeChannel(sbChannel);
+    sbChannel = null;
   }
 
   online.enabled = false;
   online.roomCode = null;
   online.playerSide = null;
-  online.roomRef = null;
 
   updateOnlineStatus("已離開房間，目前是單機模式。");
   render();
 }
-
 function setupOnlineButtons(){
   const createBtn = document.getElementById("createRoomBtn");
   const joinBtn = document.getElementById("joinRoomBtn");
