@@ -2057,6 +2057,32 @@ document.getElementById("endTurnBtn").addEventListener("click", endTurn);
 setupOnlineButtons();
 wrapOnlineSync();
 render();
+
+// ── 手機版：動態 scale battleField，保持左右並排對戰感 ──
+function scaleBattleField(){
+  const bf = document.querySelector(".battleField");
+  if(!bf) return;
+  const vw = window.innerWidth;
+  if(vw >= 900){
+    bf.style.transform = "";
+    bf.style.marginBottom = "";
+    return;
+  }
+  bf.style.transform = "";
+  const naturalW = bf.scrollWidth || 1100;
+  const scale = Math.min(1, (vw - 8) / naturalW);
+  bf.style.transform = `scale(${scale})`;
+  bf.style.transformOrigin = "top center";
+  const naturalH = bf.offsetHeight;
+  const shrink = naturalH * (1 - scale);
+  bf.style.marginBottom = `-${Math.round(shrink)}px`;
+}
+
+scaleBattleField();
+window.addEventListener("resize", scaleBattleField);
+// render 後也重新 scale
+const _origRender = render;
+render = function(){ _origRender.apply(this, arguments); scaleBattleField(); };
 </script>
 </body>
 </html>
