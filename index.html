@@ -182,20 +182,21 @@ function applyPublicState(remoteState){
 
   const remoteRev = Number(remoteState.rev || 0);
 
-  // 如果這筆更新是自己剛 push 的（updatedBy === self），跳過，避免重複套用
-  if(remoteState.updatedBy === online.playerId && remoteRev <= online.localRev){
+  // 跳過：這是自己剛 push 的（Firebase 監聽器也會回彈給自己），不需要重新套用
+  if(remoteState.updatedBy === online.playerId){
     online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev);
+    online.localRev = Math.max(online.localRev || 0, remoteRev);
     return;
   }
 
-  // 如果比目前已套用的版本還舊，跳過
+  // 跳過：版本比已套用的還舊
   if(remoteRev > 0 && remoteRev <= (online.lastAppliedRev || 0)){
     return;
   }
 
   online.isApplyingRemote = true;
-  online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev || 0);
-  online.localRev = Math.max(online.localRev || 0, remoteRev || 0);
+  online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev);
+  online.localRev = Math.max(online.localRev || 0, remoteRev);
 
   state = {
     ...state,
@@ -258,9 +259,8 @@ function syncPushGameState(reason = "update"){
     reason
   };
 
-  // Push 到 Firebase；不需要再 applyPublicState，因為本地狀態已是最新的。
-  // Firebase 的 .on("value") 監聽器收到時，因為 updatedBy === playerId 且 rev 一樣，
-  // 會被下方的 applyPublicState 裡的重複判斷擋掉。
+  // Push 到 Firebase；Firebase .on("value") 也會回傳給自己，
+  // 但 applyPublicState 裡的 updatedBy 判斷會跳過，不會重複套用。
   return online.roomRef.child("gameState").set(payload).catch(err => {
     console.error("syncPushGameState failed", err);
     setLog("同步失敗，請重新整理或重新加入房間。");
@@ -269,9 +269,7 @@ function syncPushGameState(reason = "update"){
 
 function renderAndSync(reason = "update"){
   render();
-  return syncPushGameState(reason).then(() => {
-    if(online.enabled) pollOnlineRoomOnce();
-  });
+  return syncPushGameState(reason);
 }
 
 function canUseOnlineTurn(){
@@ -330,6 +328,11 @@ async function createOnlineRoom(){
       gameState: initialState
     });
 
+    // ★ 建立房間後，localRev 和 lastAppliedRev 必須設為 1，
+    //   這樣之後 applyPublicState 才不會把 rev:1 當成「新的對手更新」重複套用
+    online.localRev = 1;
+    online.lastAppliedRev = 1;
+
     enterOnlineRoom(code, "red", ref);
   }catch(err){
     console.error(err);
@@ -368,6 +371,25 @@ async function joinOnlineRoom(){
       await ref.child("players/blue").set(online.playerId);
     }
 
+    // ★ 加入時立刻把 Firebase 上的遊戲狀態套入本地，否則本地是空的初始 state
+    if(data.gameState){
+      const gs = data.gameState;
+      const gsRev = Number(gs.rev || 0);
+      state = {
+        ...state,
+        ...gs,
+        selectedPiece: null, selectedCard: null,
+        draggingCard: null, draggingPiece: null,
+        dragPreviewSide: null, dragPreviewIdx: null, dropHandled: false
+      };
+      if(!state.traps) state.traps = { red: [], blue: [] };
+      if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
+      ensureSkillState();
+      // ★ 設好 rev，讓 applyPublicState 之後能正確判斷「哪些是新的對手更新」
+      online.lastAppliedRev = gsRev;
+      online.localRev = gsRev;
+    }
+
     enterOnlineRoom(code, joinedSide, ref);
   }catch(err){
     console.error(err);
@@ -390,13 +412,16 @@ function enterOnlineRoom(code, side, ref){
   online.roomCode = code;
   online.playerSide = side;
   online.roomRef = ref;
-  online.lastAppliedRev = 0;
-  online.localRev = 0;
+  // ★ 不要歸零！createOnlineRoom 和 joinOnlineRoom 已設好正確的 rev，
+  //   歸零會導致之後收到對手的 push 被誤判為「舊版本」或「重複」
+  if(!online.lastAppliedRev) online.lastAppliedRev = 0;
+  if(!online.localRev) online.localRev = 0;
   online.isApplyingRemote = false;
 
   const input = document.getElementById("roomCodeInput");
   if(input) input.value = code;
 
+  // players 用 .on 即時更新身份
   ref.child("players").on("value", snap => {
     const players = snap.val() || {};
     if(players.red === online.playerId) online.playerSide = "red";
@@ -405,14 +430,9 @@ function enterOnlineRoom(code, side, ref){
     render();
   });
 
-  ref.child("gameState").on("value", snap => {
-    const remoteState = snap.val();
-    if(!remoteState) return;
-    applyPublicState(remoteState);
-  });
-
-  // 注意：.on("value") 已經會立即回傳目前值，不需要再額外 .get()
-
+  // gameState 不用 .on，改用純 polling（每 800ms 拉一次）
+  // 這樣可以避免 Firebase 把自己剛 push 的資料回彈給自己的 .on 監聽器，
+  // 造成 rev 混亂、applyPublicState 誤套用的問題。
   startOnlinePolling();
   updateOnlineStatus();
 }
