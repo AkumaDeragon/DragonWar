@@ -5327,29 +5327,6 @@ button {
    結束回合：river 正下方中間欄
    ========================================================= */
 
-/* battleField 改成兩排：第一排是主戰場，第二排只有中間欄 */
-.battleField {
-  grid-template-rows: auto auto;
-}
-
-.riverBelowEndTurn {
-  grid-column: 2;  /* 中間欄 */
-  grid-row: 2;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 14px;
-}
-
-/* river 本身只佔第一排 */
-.river {
-  grid-row: 1;
-}
-
-.redPanel, .bluePanel {
-  grid-row: 1;
-}
-
 /* =========================================================
    turnLabel 固定置頂
    ========================================================= */
@@ -5362,4 +5339,21 @@ button {
   backdrop-filter: blur(10px);
   padding: 10px 0;
   margin-bottom: 16px;
+}
+
+/* =========================================================
+   結束回合：battleField 正下方，對齊戰線中間
+   ========================================================= */
+
+.endTurnBelowField {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.riverEndTurnBtn {
+  padding: 12px 36px !important;
+  font-size: 16px !important;
+  line-height: 1.2 !important;
+  width: auto !important;
 }
