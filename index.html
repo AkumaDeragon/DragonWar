@@ -12,8 +12,6 @@
       <div id="turnLabel" class="turnLabel redTurn">紅方回合</div>
     </section>
 
-    
-
     <section class="onlinePanel">
       <div class="onlineTitle">線上對戰</div>
       <div class="onlineControls">
@@ -184,7 +182,9 @@ function applyPublicState(remoteState){
   if(!remoteState) return;
 
   // Firebase 把自己剛剛 push 的資料回彈給自己，直接跳過
-  if(remoteState.updatedBy === online.playerId) return;
+  const isSelf = remoteState.updatedBy === online.playerId;
+  console.log("[SYNC RECV]", "reason:", remoteState.reason, "turn:", remoteState.turn, "updatedBy:", remoteState.updatedBy, "myId:", online.playerId, "isSelf:", isSelf, "mySide:", online.playerSide);
+  if(isSelf) return;
 
   online.isApplyingRemote = true;
 
@@ -200,7 +200,30 @@ function applyPublicState(remoteState){
     dropHandled: false
   };
 
+  // Firebase 會把空陣列存成 null，套用後必須還原成陣列
+  const fixArr = (v, len) => {
+    if(!v) return new Array(len).fill(null);
+    if(Array.isArray(v)) return v;
+    // Firebase 有時把陣列存成 {0:..., 1:...} 的物件
+    const maxKey = Math.max(...Object.keys(v).map(Number));
+    const arr = new Array(Math.max(len, maxKey + 1)).fill(null);
+    Object.entries(v).forEach(([k, val]) => { arr[Number(k)] = val; });
+    return arr;
+  };
+
+  if(state.boards){
+    if(state.boards.red) state.boards.red = fixArr(state.boards.red, 25);
+    if(state.boards.blue) state.boards.blue = fixArr(state.boards.blue, 25);
+  }
+  if(state.hands){
+    if(state.hands.red && !Array.isArray(state.hands.red)) state.hands.red = fixArr(state.hands.red, 0);
+    if(state.hands.blue && !Array.isArray(state.hands.blue)) state.hands.blue = fixArr(state.hands.blue, 0);
+  }
   if(!state.traps) state.traps = { red: [], blue: [] };
+  if(state.traps){
+    if(!Array.isArray(state.traps.red)) state.traps.red = state.traps.red ? fixArr(state.traps.red, 0) : [];
+    if(!Array.isArray(state.traps.blue)) state.traps.blue = state.traps.blue ? fixArr(state.traps.blue, 0) : [];
+  }
   if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
   ensureSkillState();
 
@@ -228,6 +251,7 @@ function syncPushGameState(reason = "update"){
     reason
   };
 
+  console.log("[SYNC PUSH]", "reason:", reason, "turn:", payload.turn, "myId:", online.playerId, "mySide:", online.playerSide);
   return online.roomRef.child("gameState").set(payload).catch(err => {
     console.error("syncPushGameState failed", err);
     setLog("同步失敗，請重新整理或重新加入房間。");
@@ -347,6 +371,11 @@ async function joinOnlineRoom(){
       };
       if(!state.traps) state.traps = { red: [], blue: [] };
       if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
+      // Firebase null 陣列修正
+      const fx = (v, len) => { if(!v) return new Array(len).fill(null); if(Array.isArray(v)) return v; const mk = Math.max(...Object.keys(v).map(Number)); const a = new Array(Math.max(len,mk+1)).fill(null); Object.entries(v).forEach(([k,val])=>{a[Number(k)]=val;}); return a; };
+      if(state.boards){ state.boards.red = fx(state.boards.red,25); state.boards.blue = fx(state.boards.blue,25); }
+      if(state.hands){ if(!Array.isArray(state.hands.red)) state.hands.red = fx(state.hands.red,0); if(!Array.isArray(state.hands.blue)) state.hands.blue = fx(state.hands.blue,0); }
+      if(state.traps){ if(!Array.isArray(state.traps.red)) state.traps.red = fx(state.traps.red,0); if(!Array.isArray(state.traps.blue)) state.traps.blue = fx(state.traps.blue,0); }
       ensureSkillState();
     }
 
