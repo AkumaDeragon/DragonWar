@@ -2067,46 +2067,57 @@ setupOnlineButtons();
 wrapOnlineSync();
 render();
 
-// ── 橫直屏偵測 + 橫屏時 scale battleField ──
+// ── 橫直屏偵測 + 橫屏時 scale 整個 #game ──
 function handleOrientation(){
   const overlay = document.getElementById("rotateOverlay");
-  const bf = document.querySelector(".battleField");
-  if(!overlay || !bf) return;
+  const game = document.getElementById("game");
+  if(!overlay || !game) return;
 
   const isPortrait = window.innerHeight > window.innerWidth;
-  const isMobile = window.innerWidth < 1024 || ('ontouchstart' in window);
+  const isMobile = ('ontouchstart' in window) || window.navigator.maxTouchPoints > 0;
 
   if(isMobile && isPortrait){
-    // 直屏：顯示旋轉提示，battleField 不動
     overlay.style.display = "flex";
-    bf.style.transform = "";
-    bf.style.marginBottom = "";
+    game.style.transform = "";
+    game.style.transformOrigin = "";
+    game.style.width = "";
+    game.style.marginLeft = "";
     return;
   }
 
   overlay.style.display = "none";
 
   if(isMobile){
-    // 橫屏手機：scale battleField 讓它塞進畫面
-    bf.style.transformOrigin = "top center";
+    // 橫屏手機：先重設 transform 量自然寬，再算 scale
+    game.style.transform = "";
+    game.style.width = "max-content";
+
     const vw = window.innerWidth;
-    const naturalW = bf.scrollWidth || 1100;
-    const scale = Math.min(1, (vw - 16) / naturalW);
-    bf.style.transform = scale < 1 ? `scale(${scale})` : "";
-    const shrink = bf.offsetHeight * (1 - scale);
-    bf.style.marginBottom = scale < 1 ? `-${Math.round(shrink)}px` : "";
+    const naturalW = game.offsetWidth;
+    const scale = Math.min(1, vw / naturalW);
+
+    game.style.width = "";
+    game.style.transformOrigin = "top left";
+    game.style.transform = `scale(${scale})`;
+    game.style.marginLeft = "0";
+    // 補回垂直空白
+    requestAnimationFrame(() => {
+      const shrink = game.offsetHeight * (1 - scale);
+      game.style.marginBottom = `-${Math.round(shrink)}px`;
+    });
   } else {
-    // 桌機：不 scale
-    bf.style.transform = "";
-    bf.style.marginBottom = "";
+    game.style.transform = "";
+    game.style.transformOrigin = "";
+    game.style.marginLeft = "";
+    game.style.marginBottom = "";
+    game.style.width = "";
   }
 }
 
 handleOrientation();
 window.addEventListener("resize", handleOrientation);
 window.addEventListener("orientationchange", function(){
-  // orientationchange 之後 innerWidth/Height 還沒更新，稍等一下
-  setTimeout(handleOrientation, 120);
+  setTimeout(handleOrientation, 150);
 });
 
 const _origRender = render;
