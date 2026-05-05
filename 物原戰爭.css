@@ -5027,12 +5027,12 @@ button {
 }
 
 /* =========================================================
-   battleField — 不做 JS scale，CSS 控制
+   battleField — scale 由 JS handleOrientation 控制
    ========================================================= */
 
 .battleField {
-  transform: none !important;
   transition: none;
+  transform-origin: top center;
 }
 
 /* =========================================================
