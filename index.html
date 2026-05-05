@@ -135,12 +135,9 @@ let online = {
   roomCode: null,
   playerSide: null,
   playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
-  suppressPush: false,
   roomRef: null,
-  lastAppliedRev: 0,
-  localRev: 0,
   isApplyingRemote: false,
-  pollTimer: null
+  lastPushedAt: 0   // 記錄最近一次自己 push 的時間戳，用來辨別 Firebase 回彈
 };
 
 
@@ -177,26 +174,17 @@ function getPublicState(){
   };
 }
 
+// ─────────────────────────────────────────────────────────
+// applyPublicState：收到對手的狀態更新，套用到本地
+// 唯一判斷：updatedBy === 自己 → 跳過（這是 Firebase 把自己的 push 回彈過來）
+// ─────────────────────────────────────────────────────────
 function applyPublicState(remoteState){
   if(!remoteState) return;
 
-  const remoteRev = Number(remoteState.rev || 0);
-
-  // 跳過：這是自己剛 push 的（Firebase 監聽器也會回彈給自己），不需要重新套用
-  if(remoteState.updatedBy === online.playerId){
-    online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev);
-    online.localRev = Math.max(online.localRev || 0, remoteRev);
-    return;
-  }
-
-  // 跳過：版本比已套用的還舊
-  if(remoteRev > 0 && remoteRev <= (online.lastAppliedRev || 0)){
-    return;
-  }
+  // Firebase 把自己剛剛 push 的資料回彈給自己，直接跳過
+  if(remoteState.updatedBy === online.playerId) return;
 
   online.isApplyingRemote = true;
-  online.lastAppliedRev = Math.max(online.lastAppliedRev || 0, remoteRev);
-  online.localRev = Math.max(online.localRev || 0, remoteRev);
 
   state = {
     ...state,
@@ -225,42 +213,19 @@ function applyPublicState(remoteState){
   online.isApplyingRemote = false;
 }
 
-
-function pollOnlineRoomOnce(){
-  if(!online.enabled || !online.roomRef) return;
-
-  online.roomRef.child("players").get().then(snap => {
-    const players = snap.val() || {};
-    if(players.red === online.playerId) online.playerSide = "red";
-    else if(players.blue === online.playerId) online.playerSide = "blue";
-    updateOnlineStatus();
-  }).catch(err => console.warn("players poll failed", err));
-
-  online.roomRef.child("gameState").get().then(snap => {
-    if(snap.exists()) applyPublicState(snap.val());
-  }).catch(err => console.warn("gameState poll failed", err));
-}
-
-function startOnlinePolling(){
-  if(online.pollTimer) clearInterval(online.pollTimer);
-  online.pollTimer = setInterval(pollOnlineRoomOnce, 800);
-}
-
+// ─────────────────────────────────────────────────────────
+// syncPushGameState：把本地狀態推送到 Firebase
+// ─────────────────────────────────────────────────────────
 function syncPushGameState(reason = "update"){
   if(!online.enabled || !online.roomRef || online.isApplyingRemote) return Promise.resolve();
 
-  online.localRev = Math.max(online.localRev || 0, online.lastAppliedRev || 0) + 1;
-
   const payload = {
     ...getPublicState(),
-    rev: online.localRev,
     updatedAt: Date.now(),
     updatedBy: online.playerId,
     reason
   };
 
-  // Push 到 Firebase；Firebase .on("value") 也會回傳給自己，
-  // 但 applyPublicState 裡的 updatedBy 判斷會跳過，不會重複套用。
   return online.roomRef.child("gameState").set(payload).catch(err => {
     console.error("syncPushGameState failed", err);
     setLog("同步失敗，請重新整理或重新加入房間。");
@@ -294,6 +259,9 @@ function updateOnlineStatus(message){
   el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜目前${turnText}回合｜${myTurn}`;
 }
 
+// ─────────────────────────────────────────────────────────
+// createOnlineRoom：建立房間
+// ─────────────────────────────────────────────────────────
 async function createOnlineRoom(){
   try{
     initFirebaseOnline();
@@ -313,7 +281,6 @@ async function createOnlineRoom(){
 
     const initialState = {
       ...getPublicState(),
-      rev: 1,
       updatedAt: Date.now(),
       updatedBy: online.playerId,
       reason: "create"
@@ -321,17 +288,9 @@ async function createOnlineRoom(){
 
     await ref.set({
       createdAt: Date.now(),
-      players: {
-        red: online.playerId,
-        blue: null
-      },
+      players: { red: online.playerId, blue: null },
       gameState: initialState
     });
-
-    // ★ 建立房間後，localRev 和 lastAppliedRev 必須設為 1，
-    //   這樣之後 applyPublicState 才不會把 rev:1 當成「新的對手更新」重複套用
-    online.localRev = 1;
-    online.lastAppliedRev = 1;
 
     enterOnlineRoom(code, "red", ref);
   }catch(err){
@@ -340,6 +299,9 @@ async function createOnlineRoom(){
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// joinOnlineRoom：加入房間
+// ─────────────────────────────────────────────────────────
 async function joinOnlineRoom(){
   try{
     initFirebaseOnline();
@@ -371,10 +333,9 @@ async function joinOnlineRoom(){
       await ref.child("players/blue").set(online.playerId);
     }
 
-    // ★ 加入時立刻把 Firebase 上的遊戲狀態套入本地，否則本地是空的初始 state
+    // 加入時立刻把 Firebase 上的遊戲狀態套入本地
     if(data.gameState){
       const gs = data.gameState;
-      const gsRev = Number(gs.rev || 0);
       state = {
         ...state,
         ...gs,
@@ -385,9 +346,6 @@ async function joinOnlineRoom(){
       if(!state.traps) state.traps = { red: [], blue: [] };
       if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
       ensureSkillState();
-      // ★ 設好 rev，讓 applyPublicState 之後能正確判斷「哪些是新的對手更新」
-      online.lastAppliedRev = gsRev;
-      online.localRev = gsRev;
     }
 
     enterOnlineRoom(code, joinedSide, ref);
@@ -397,31 +355,26 @@ async function joinOnlineRoom(){
   }
 }
 
+// ─────────────────────────────────────────────────────────
+// enterOnlineRoom：設置 Firebase 監聽器
+// ─────────────────────────────────────────────────────────
 function enterOnlineRoom(code, side, ref){
+  // 先清除舊監聽器
   if(online.roomRef){
     online.roomRef.child("gameState").off();
     online.roomRef.child("players").off();
-  }
-
-  if(online.pollTimer){
-    clearInterval(online.pollTimer);
-    online.pollTimer = null;
   }
 
   online.enabled = true;
   online.roomCode = code;
   online.playerSide = side;
   online.roomRef = ref;
-  // ★ 不要歸零！createOnlineRoom 和 joinOnlineRoom 已設好正確的 rev，
-  //   歸零會導致之後收到對手的 push 被誤判為「舊版本」或「重複」
-  if(!online.lastAppliedRev) online.lastAppliedRev = 0;
-  if(!online.localRev) online.localRev = 0;
   online.isApplyingRemote = false;
 
   const input = document.getElementById("roomCodeInput");
   if(input) input.value = code;
 
-  // players 用 .on 即時更新身份
+  // players 即時監聽（身份更新）
   ref.child("players").on("value", snap => {
     const players = snap.val() || {};
     if(players.red === online.playerId) online.playerSide = "red";
@@ -430,21 +383,21 @@ function enterOnlineRoom(code, side, ref){
     render();
   });
 
-  // gameState 不用 .on，改用純 polling（每 800ms 拉一次）
-  // 這樣可以避免 Firebase 把自己剛 push 的資料回彈給自己的 .on 監聽器，
-  // 造成 rev 混亂、applyPublicState 誤套用的問題。
-  startOnlinePolling();
+  // gameState 即時監聽（對手操作）
+  // applyPublicState 內部會用 updatedBy 過濾自己的回彈
+  ref.child("gameState").on("value", snap => {
+    if(!snap.exists()) return;
+    applyPublicState(snap.val());
+  });
+
   updateOnlineStatus();
+  render();
 }
 
 function leaveOnlineRoom(){
   if(online.roomRef){
     online.roomRef.child("gameState").off();
-  }
-
-  if(online.pollTimer){
-    clearInterval(online.pollTimer);
-    online.pollTimer = null;
+    online.roomRef.child("players").off();
   }
 
   online.enabled = false;
