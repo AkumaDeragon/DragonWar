@@ -2067,62 +2067,41 @@ setupOnlineButtons();
 wrapOnlineSync();
 render();
 
-// ── 橫直屏偵測 + 橫屏時 scale 整個 #game ──
+// ── 橫直屏偵測：直屏顯示旋轉提示，橫屏用 zoom 縮放 ──
 function handleOrientation(){
   const overlay = document.getElementById("rotateOverlay");
-  const game = document.getElementById("game");
-  if(!overlay || !game) return;
+  if(!overlay) return;
 
   const isPortrait = window.innerHeight > window.innerWidth;
   const isMobile = ('ontouchstart' in window) || window.navigator.maxTouchPoints > 0;
 
   if(isMobile && isPortrait){
     overlay.style.display = "flex";
-    game.style.transform = "";
-    game.style.transformOrigin = "";
-    game.style.marginBottom = "";
+    document.documentElement.style.zoom = "";
     return;
   }
 
   overlay.style.display = "none";
 
   if(isMobile){
-    // 先清 transform 量自然寬
-    game.style.transform = "";
-    game.style.transformOrigin = "";
-
+    // 橫屏：用 zoom 讓整個頁面等比縮小塞進畫面
+    // 先清 zoom 量真實頁面寬
+    document.documentElement.style.zoom = "";
     const vw = window.innerWidth;
-    const naturalW = game.offsetWidth;
-    const scale = Math.min(1, vw / naturalW);
-
-    if(scale < 1){
-      // top center：縮完後水平置中
-      game.style.transformOrigin = "top center";
-      // 讓 game 先置中再 scale
-      game.style.marginLeft = ((vw - naturalW) / 2) + "px";
-      game.style.transform = `scale(${scale})`;
-      requestAnimationFrame(() => {
-        const shrink = game.offsetHeight * (1 - scale);
-        game.style.marginBottom = `-${Math.round(shrink)}px`;
-      });
-    } else {
-      game.style.transform = "";
-      game.style.transformOrigin = "";
-      game.style.marginLeft = "";
-      game.style.marginBottom = "";
+    const pageW = document.documentElement.scrollWidth;
+    if(pageW > vw){
+      const zoom = vw / pageW;
+      document.documentElement.style.zoom = zoom;
     }
   } else {
-    game.style.transform = "";
-    game.style.transformOrigin = "";
-    game.style.marginLeft = "";
-    game.style.marginBottom = "";
+    document.documentElement.style.zoom = "";
   }
 }
 
 handleOrientation();
 window.addEventListener("resize", handleOrientation);
 window.addEventListener("orientationchange", function(){
-  setTimeout(handleOrientation, 150);
+  setTimeout(handleOrientation, 200);
 });
 
 const _origRender = render;
