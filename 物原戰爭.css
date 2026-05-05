@@ -5327,3 +5327,125 @@ button {
   border-top-width: 16px !important;
   z-index: 10 !important;
 }
+
+
+/* =========================================================
+   手機版對戰佈局：改成直式對戰感
+   上方：對手陣地（縮小、鏡像）
+   中間：戰線
+   下方：自己陣地（正常）
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+  /* 整體戰場改直式單欄 */
+  .battleField {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    align-items: center !important;
+  }
+
+  /* 戰線移到中間 */
+  .river {
+    order: 2 !important;
+    width: min(340px, 96vw) !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    font-size: 15px !important;
+    letter-spacing: .2em !important;
+  }
+
+  .river span {
+    display: inline !important;
+  }
+
+  /* 紅方（通常是自己或上方）— 放下方 */
+  .redPanel {
+    order: 3 !important;
+    width: min(340px, 96vw) !important;
+  }
+
+  /* 藍方 — 放上方，稍微縮小有距離感 */
+  .bluePanel {
+    order: 1 !important;
+    width: min(340px, 96vw) !important;
+    transform: scale(0.88) !important;
+    transform-origin: top center !important;
+    opacity: 0.9 !important;
+    margin-bottom: -18px !important;
+  }
+
+  /* 棋盤縮小以符合手機寬度 */
+  .board {
+    grid-template-columns: repeat(5, 52px) !important;
+    grid-template-rows: repeat(5, 52px) !important;
+    gap: 5px !important;
+    padding: 10px !important;
+  }
+
+  .cell {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  /* 棋子圖示縮小 */
+  .pieceIcon {
+    font-size: 22px !important;
+  }
+
+  .pieceLabel {
+    font-size: 10px !important;
+  }
+
+  .shieldBadge {
+    font-size: 9px !important;
+    padding: 1px 3px !important;
+  }
+
+  /* 手牌縮小 */
+  .card {
+    width: 80px !important;
+    height: 108px !important;
+  }
+
+  .card .cardIcon {
+    font-size: 26px !important;
+  }
+
+  .card .cardName {
+    font-size: 12px !important;
+  }
+
+  .card .cardDesc {
+    font-size: 9px !important;
+  }
+
+  /* 手牌區橫向滾動 */
+  .hand {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    max-width: min(340px, 96vw) !important;
+    padding-bottom: 4px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* panel 標題縮小 */
+  .sidePanel h2 {
+    font-size: 16px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* frontTag 縮小 */
+  .frontTag {
+    font-size: 9px !important;
+  }
+}
