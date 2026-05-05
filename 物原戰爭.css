@@ -88,6 +88,15 @@ button {
   position: relative;
 }
 
+/* 手機橫屏：transform-origin top left，margin 改由 JS 控制 */
+@media (max-width: 1024px) and (orientation: landscape) {
+  #game {
+    margin-left: 0;
+    margin-right: 0;
+    width: max-content;
+  }
+}
+
 #game::before {
   content: "物原戰爭";
   display: block;
