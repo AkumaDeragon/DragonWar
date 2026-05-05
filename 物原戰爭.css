@@ -710,6 +710,7 @@ button {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  gap: 18px;
   color: #9eefff;
   font-size: 26px;
   font-weight: 1000;
