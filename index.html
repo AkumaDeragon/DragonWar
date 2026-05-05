@@ -2080,37 +2080,42 @@ function handleOrientation(){
     overlay.style.display = "flex";
     game.style.transform = "";
     game.style.transformOrigin = "";
-    game.style.width = "";
-    game.style.marginLeft = "";
+    game.style.marginBottom = "";
     return;
   }
 
   overlay.style.display = "none";
 
   if(isMobile){
-    // 橫屏手機：先重設 transform 量自然寬，再算 scale
+    // 先清 transform 量自然寬
     game.style.transform = "";
-    game.style.width = "max-content";
+    game.style.transformOrigin = "";
 
     const vw = window.innerWidth;
     const naturalW = game.offsetWidth;
     const scale = Math.min(1, vw / naturalW);
 
-    game.style.width = "";
-    game.style.transformOrigin = "top left";
-    game.style.transform = `scale(${scale})`;
-    game.style.marginLeft = "0";
-    // 補回垂直空白
-    requestAnimationFrame(() => {
-      const shrink = game.offsetHeight * (1 - scale);
-      game.style.marginBottom = `-${Math.round(shrink)}px`;
-    });
+    if(scale < 1){
+      // top center：縮完後水平置中
+      game.style.transformOrigin = "top center";
+      // 讓 game 先置中再 scale
+      game.style.marginLeft = ((vw - naturalW) / 2) + "px";
+      game.style.transform = `scale(${scale})`;
+      requestAnimationFrame(() => {
+        const shrink = game.offsetHeight * (1 - scale);
+        game.style.marginBottom = `-${Math.round(shrink)}px`;
+      });
+    } else {
+      game.style.transform = "";
+      game.style.transformOrigin = "";
+      game.style.marginLeft = "";
+      game.style.marginBottom = "";
+    }
   } else {
     game.style.transform = "";
     game.style.transformOrigin = "";
     game.style.marginLeft = "";
     game.style.marginBottom = "";
-    game.style.width = "";
   }
 }
 
