@@ -1010,20 +1010,7 @@ button {
 }
 
 /* ---------- Responsive ---------- */
-
-@media (max-width: 1080px) {
-  .battleField {
-    grid-template-columns: 1fr;
-    gap: 28px;
-  }
-
-  .river {
-    width: min(430px, 90vw);
-    height: 70px;
-    flex-direction: row;
-    margin: 0 auto;
-  }
-}
+/* battleField 永遠保持三欄，由 JS scale 處理手機縮放 */
 
 @media (max-width: 560px) {
   #game::before {
