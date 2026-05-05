@@ -7,6 +7,15 @@
   <link rel="stylesheet" href="物原戰爭.css" />
 </head>
 <body>
+  <!-- 直屏提示 overlay（只在手機直屏時顯示） -->
+  <div id="rotateOverlay" class="rotateOverlay">
+    <div class="rotateContent">
+      <div class="rotateIcon">⟳</div>
+      <div class="rotateTitle">請旋轉螢幕</div>
+      <div class="rotateDesc">物原戰爭需要橫屏遊玩<br>請將手機旋轉為橫向</div>
+    </div>
+  </div>
+
   <main id="game">
     <section class="topBar">
       <div id="turnLabel" class="turnLabel redTurn">紅方回合</div>
@@ -2058,19 +2067,22 @@ setupOnlineButtons();
 wrapOnlineSync();
 render();
 
-// ── 手機版改為上下排列，不需 scale；桌機版也不 scale ──
-function scaleBattleField(){
-  const bf = document.querySelector(".battleField");
-  if(!bf) return;
-  bf.style.transform = "";
-  bf.style.marginBottom = "";
+// ── 橫直屏偵測：手機直屏顯示旋轉提示，橫屏正常遊玩 ──
+function handleOrientation(){
+  const overlay = document.getElementById("rotateOverlay");
+  if(!overlay) return;
+  const isMobile = window.innerWidth < 1024 || ('ontouchstart' in window);
+  const isPortrait = window.innerHeight > window.innerWidth;
+  if(isMobile && isPortrait){
+    overlay.style.display = "flex";
+  } else {
+    overlay.style.display = "none";
+  }
 }
 
-scaleBattleField();
-window.addEventListener("resize", scaleBattleField);
-// render 後也重新 scale
-const _origRender = render;
-render = function(){ _origRender.apply(this, arguments); scaleBattleField(); };
+handleOrientation();
+window.addEventListener("resize", handleOrientation);
+window.addEventListener("orientationchange", handleOrientation);
 </script>
 </body>
 </html>
