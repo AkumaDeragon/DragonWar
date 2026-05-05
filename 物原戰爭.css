@@ -5013,143 +5013,78 @@ button {
   }
 }
 
+
 /* =========================================================
-   結束回合按鈕列 — 全版本置中
+   結束回合列 — 全版本置中
    ========================================================= */
 
 .bottomActionBar {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  width: 100% !important;
-  margin: 18px 0 !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 18px auto;
 }
 
 /* =========================================================
-   手機版 (<900px)：上下垂直排列，不縮放，可滑動
-   電腦版 (≥900px)：左右並排，保持不變
+   battleField — 不做 JS scale，CSS 控制
    ========================================================= */
 
 .battleField {
-  transform-origin: top center;
+  transform: none !important;
+  transition: none;
 }
 
-@media (max-width: 899px) {
+/* =========================================================
+   直屏旋轉提示 overlay
+   ========================================================= */
 
-  /* 強制清除 scale，改垂直 flex */
-  .battleField {
-    display: flex !important;
-    flex-direction: column !important;
-    grid-template-columns: unset !important;
-    gap: 0 !important;
-    align-items: stretch !important;
-    transform: none !important;
-    margin-bottom: 0 !important;
-    width: 100% !important;
-  }
+.rotateOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #07101f;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
 
-  /* sidePanel 全寬，移除切角 */
-  .sidePanel {
-    width: 100% !important;
-    clip-path: none !important;
-    border-radius: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
-    align-items: center !important;
-  }
-  .sidePanel::before { display: none !important; }
+.rotateContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  color: #edf6ff;
+  text-align: center;
+  padding: 32px;
+}
 
-  /* 紅方在上 */
-  .redPanel {
-    order: 1 !important;
-    border-top: 2px solid rgba(255, 94, 112, .50) !important;
-    border-bottom: none !important;
-    padding-bottom: 16px !important;
-  }
+.rotateIcon {
+  font-size: 72px;
+  animation: rotateSpin 2s ease-in-out infinite;
+  display: inline-block;
+  color: #63adff;
+  text-shadow: 0 0 24px rgba(99,173,255,.6);
+}
 
-  /* 藍方在下 */
-  .bluePanel {
-    order: 3 !important;
-    border-top: none !important;
-    border-bottom: 2px solid rgba(99, 173, 255, .50) !important;
-    padding-top: 16px !important;
-  }
+@keyframes rotateSpin {
+  0%   { transform: rotate(0deg);   }
+  40%  { transform: rotate(90deg);  }
+  60%  { transform: rotate(90deg);  }
+  100% { transform: rotate(90deg);  }
+}
 
-  /* 戰線橫條 */
-  .river {
-    order: 2 !important;
-    writing-mode: horizontal-tb !important;
-    flex-direction: row !important;
-    width: 100% !important;
-    height: 48px !important;
-    min-height: unset !important;
-    max-height: unset !important;
-    margin-top: 0 !important;
-    padding: 0 24px !important;
-    gap: 12px !important;
-    justify-content: center !important;
-    align-items: center !important;
-    font-size: 18px !important;
-    letter-spacing: .30em !important;
-    clip-path: none !important;
-  }
+.rotateTitle {
+  font-size: 26px;
+  font-weight: 1000;
+  letter-spacing: .12em;
+  color: #fff1b8;
+  text-shadow: 0 0 16px rgba(243,211,122,.5);
+}
 
-  /* 棋盤格子縮小 */
-  .board {
-    grid-template-columns: repeat(5, 56px) !important;
-    grid-template-rows: repeat(5, 56px) !important;
-    gap: 5px !important;
-    padding: 10px !important;
-    clip-path: none !important;
-  }
-  .board::before { display: none !important; }
-
-  .cell {
-    width: 56px !important;
-    height: 56px !important;
-    clip-path: none !important;
-  }
-  .cell::before { display: none !important; }
-
-  .pieceIcon  { font-size: 20px !important; }
-  .pieceName  { font-size: 9px  !important; }
-  .pieceShield { font-size: 9px !important; padding: 1px 3px !important; }
-  .frontTag   { font-size: 8px  !important; }
-
-  .card {
-    width: 90px !important;
-    min-height: 110px !important;
-    padding: 8px 6px !important;
-    clip-path: none !important;
-  }
-  .cardIcon { font-size: 26px !important; }
-  .cardName { font-size: 12px !important; }
-  .cardDesc { font-size: 9px  !important; }
-
-  .hand {
-    justify-content: center !important;
-    flex-wrap: wrap !important;
-  }
-
-  .skillZone {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  .onlinePanel,
-  .legend,
-  .log,
-  .rules {
-    max-width: 100% !important;
-    width: 100% !important;
-  }
-
-  .bottomActionBar {
-    padding: 0 16px !important;
-  }
-
-  .legend {
-    gap: 8px !important;
-    font-size: 12px !important;
-  }
+.rotateDesc {
+  font-size: 15px;
+  color: rgba(222,236,255,.7);
+  line-height: 1.8;
 }
