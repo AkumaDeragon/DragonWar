@@ -1,0 +1,3008 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物原戰爭</title>
+    <link rel="stylesheet" href="物原戰爭.css" />
+</head>
+<body>
+  <!-- 直屏提示 overlay（只在手機直屏時顯示） -->
+  <div id="rotateOverlay" class="rotateOverlay">
+    <div class="rotateContent">
+      <div class="rotateIcon">⟳</div>
+      <div class="rotateTitle">請旋轉螢幕</div>
+      <div class="rotateDesc">物原戰爭需要橫屏遊玩<br>請將手機旋轉為橫向</div>
+    </div>
+  </div>
+
+  <main id="game">
+    <section class="topBar">
+      <div id="turnLabel" class="turnLabel redTurn">紅方回合</div>
+    </section>
+
+    <section class="onlinePanel">
+      <div class="onlineTitle">線上對戰</div>
+      <div class="onlineControls">
+        <button id="createRoomBtn" type="button">建立房間</button>
+        <input id="roomCodeInput" type="text" maxlength="6" placeholder="輸入房間碼" />
+        <button id="joinRoomBtn" type="button">加入房間</button>
+        <button id="leaveRoomBtn" type="button">離開房間</button>
+      </div>
+      <div id="onlineStatus" class="onlineStatus">目前是單機模式</div>
+    </section>
+<section class="legend">
+      <span><i class="moveBox"></i>可移動格</span>
+      <span><i class="attackBox"></i>可攻擊目標</span>
+      <span><i class="placeBox"></i>可放置格</span>
+      <span><i class="shieldBox"></i>可套盾</span>
+    </section>
+
+    <section class="battleField">
+      <section class="sidePanel redPanel">
+        <h2>紅方陣地</h2>
+        <div id="redBoard" class="board"></div>
+        <div class="handTitle" id="redHandTitle">手牌</div>
+        <div id="redHand" class="hand"></div>
+        <div class="skillZone redSkillZone" id="redSkillZone">
+          <div class="skillZoneHeader">
+            <div class="skillZoneTitle">紅方技能</div>
+            <div id="skillChargeText-red" class="skillChargeText">技能能量：0 / 2</div>
+          </div>
+          <div class="skillSpinRow">
+            <div class="skillWheelWrap">
+              <div class="skillWheelPointer"></div>
+              <div id="skillWheel-red" class="skillWheel">
+                <div class="skillWheelCenter">20%</div>
+              </div>
+            </div>
+            <div class="skillSpinControls">
+              <button id="spinSkillBtn-red" class="spinSkillBtn" data-side="red" type="button">紅方轉盤</button>
+              <div id="skillSpinResult-red" class="skillSpinResult">尚未抽取</div>
+            </div>
+          </div>
+          <div id="skillHand-red" class="skillHand sideSkillHand"></div>
+          <div id="skillLimitHint-red" class="skillLimitHint"></div>
+        </div>
+
+      </section>
+
+      <section class="river">
+        <span>戰</span>
+        <span>線</span>
+        <div class="riverSpacer"></div>
+        <div class="riverEndTurnWrap">
+          <button id="endTurnBtn" class="bottomEndTurnBtn riverEndTurnBtn">結束回合</button>
+        </div>
+      </section>
+
+      <section class="sidePanel bluePanel">
+        <h2>藍方陣地</h2>
+        <div id="blueBoard" class="board"></div>
+        <div class="handTitle" id="blueHandTitle">手牌</div>
+        <div id="blueHand" class="hand"></div>
+        <div class="skillZone blueSkillZone" id="blueSkillZone">
+          <div class="skillZoneHeader">
+            <div class="skillZoneTitle">藍方技能</div>
+            <div id="skillChargeText-blue" class="skillChargeText">技能能量：0 / 2</div>
+          </div>
+          <div class="skillSpinRow">
+            <div class="skillWheelWrap">
+              <div class="skillWheelPointer"></div>
+              <div id="skillWheel-blue" class="skillWheel">
+                <div class="skillWheelCenter">20%</div>
+              </div>
+            </div>
+            <div class="skillSpinControls">
+              <button id="spinSkillBtn-blue" class="spinSkillBtn" data-side="blue" type="button">藍方轉盤</button>
+              <div id="skillSpinResult-blue" class="skillSpinResult">尚未抽取</div>
+            </div>
+          </div>
+          <div id="skillHand-blue" class="skillHand sideSkillHand"></div>
+          <div id="skillLimitHint-blue" class="skillLimitHint"></div>
+        </div>
+
+      </section>
+    </section>
+
+    <section id="log" class="log">歡迎！紅方先手。可單機遊玩，也可建立房間線上對戰。</section>
+
+    <!-- 規則按鈕 -->
+    <div class="rulesToggleWrap">
+      <button id="rulesToggleBtn" class="rulesToggleBtn" type="button">📖 查看規則</button>
+    </div>
+
+    <!-- 規則 Modal：翻書式圖鑑 -->
+    <div id="rulesModal" class="rulesModal" aria-hidden="true">
+      <div class="rulesModalBackdrop" id="rulesModalBackdrop"></div>
+      <div class="rulesModalBox bookRuleBox" role="dialog" aria-modal="true" aria-labelledby="rulesBookTitle">
+        <button class="rulesModalClose" id="rulesModalClose" type="button" aria-label="關閉規則">✕</button>
+
+        <div class="rulesBookCover">
+          <div class="rulesBookSeal">物</div>
+          <div>
+            <div id="rulesBookTitle" class="rulesModalTitle">物原戰爭 — 戰術圖鑑</div>
+            <div class="rulesModalSubTitle">卡牌・技能・規則・勝利條件</div>
+          </div>
+        </div>
+
+        <div class="rulesBookTabs" role="tablist" aria-label="規則分頁">
+          <button class="rulesBookTab active" type="button" data-rules-page="cards" role="tab" aria-selected="true">🃏 卡牌頁</button>
+          <button class="rulesBookTab" type="button" data-rules-page="skills" role="tab" aria-selected="false">✨ 技能頁</button>
+          <button class="rulesBookTab" type="button" data-rules-page="rules" role="tab" aria-selected="false">⚔️ 規則頁</button>
+          <button class="rulesBookTab" type="button" data-rules-page="tips" role="tab" aria-selected="false">🏆 勝利頁</button>
+        </div>
+
+        <div class="rulesBook" id="rulesBook">
+          <section class="rulesPage active" data-rules-page="cards" role="tabpanel">
+            <div class="rulesPageHeader">
+              <span class="rulesPageMark">Ⅰ</span>
+              <div>
+                <h3>卡牌頁</h3>
+                <p>手牌最多 3 張；場上棋子 + 手牌總數最多 6 張。圖片會自動讀取你同資料夾內的素材。</p>
+              </div>
+            </div>
+            <div class="cardBookGrid">
+              <article class="cardIntro redIntro"><img src="REDsword.png" alt="紅方劍"><b>劍</b><span>前進一格，抵達敵方底線即可勝利。</span></article>
+              <article class="cardIntro blueIntro"><img src="BLUEbow.png" alt="藍方弓箭"><b>弓箭</b><span>射同橫列第一個敵人，會先消耗護盾。</span></article>
+              <article class="cardIntro redIntro"><img src="REDchariot.png" alt="紅方車"><b>車</b><span>每回合可走兩次小十字，跨戰線可攻擊。</span></article>
+              <article class="cardIntro blueIntro"><img src="BLUEshield.png" alt="藍方盾"><b>盾</b><span>附在自己棋子上，可疊加抵擋傷害。</span></article>
+              <article class="cardIntro neutralIntro"><img src="nuke.png" alt="核彈"><b>核彈</b><span>指定中心後爆破 3x3，護盾會先被扣除。</span></article>
+              <article class="cardIntro neutralIntro"><img src="trap.png" alt="陷阱"><b>陷阱</b><span>每人整局 1 張，放上中下三格，只擋車。</span></article>
+            </div>
+          </section>
+
+          <section class="rulesPage" data-rules-page="skills" role="tabpanel">
+            <div class="rulesPageHeader">
+              <span class="rulesPageMark">Ⅱ</span>
+              <div>
+                <h3>技能頁</h3>
+                <p>每累積 2 次自己的回合可轉一次技能輪盤；基礎 20%，沒中下次 +10%。技能牌最多持有 2 張。</p>
+              </div>
+            </div>
+            <div class="skillBookList">
+              <div class="skillBookItem"><i>❄️</i><b>凍結</b><span>敵方下一回合直接跳過。</span></div>
+              <div class="skillBookItem"><i>💥</i><b>爆裂弓</b><span>下一次弓箭可射任意敵方棋子，不限同列。</span></div>
+              <div class="skillBookItem"><i>🌪️</i><b>擊退</b><span>全部敵人回到自己的重生點，優先最後一排。</span></div>
+              <div class="skillBookItem"><i>💣</i><b>自爆</b><span>敵方所有車所在位置 3x3 連鎖爆炸，不分敵我。</span></div>
+              <div class="skillBookItem"><i>🐉</i><b>龍龍卡</b><span>選擇整排或整列，龍焰消滅線上的所有棋子。</span></div>
+            </div>
+          </section>
+
+          <section class="rulesPage" data-rules-page="rules" role="tabpanel">
+            <div class="rulesPageHeader">
+              <span class="rulesPageMark">Ⅲ</span>
+              <div>
+                <h3>規則頁</h3>
+                <p>點選或拖曳卡牌、棋子都可以操作；黃色是移動，紅色是攻擊，綠色是放置，青色是套盾。</p>
+              </div>
+            </div>
+            <div class="rulesBookColumns">
+              <div class="rulesBookNote"><b>放置</b><span>一般棋子放在己方陣地空格。核彈、盾、陷阱會依卡牌效果指定格子。</span></div>
+              <div class="rulesBookNote"><b>攻擊</b><span>攻擊有護盾的敵人時先扣盾；沒有護盾才會消滅棋子。</span></div>
+              <div class="rulesBookNote"><b>車的冷卻</b><span>車完成兩次移動後會休息 3 回合；冷卻中不能行動。</span></div>
+              <div class="rulesBookNote"><b>線上對戰</b><span>建立房間的人是紅方，加入房間的人是藍方；只有輪到自己才能操作。</span></div>
+            </div>
+          </section>
+
+          <section class="rulesPage" data-rules-page="tips" role="tabpanel">
+            <div class="rulesPageHeader">
+              <span class="rulesPageMark">Ⅳ</span>
+              <div>
+                <h3>勝利頁</h3>
+                <p>讓劍推進到敵方底線就是核心勝利條件；車、弓、核彈與技能都是幫劍開路的手段。</p>
+              </div>
+            </div>
+            <div class="winBookBox">
+              <div class="winRoute redRoute">紅方劍：一路往藍方底線推進。</div>
+              <div class="winRoute blueRoute">藍方劍：一路往紅方底線推進。</div>
+              <div class="winRoute goldRoute">用盾保護主攻劍，用弓與車清路，核彈和技能負責逆轉局面。</div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- 加入房間 Toast 提示 -->
+    <div id="joinToast" class="joinToast" aria-live="polite"></div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<script>
+
+// ═══════════════════════════════════════════════════════
+//  Supabase 聯機同步層
+//  原理：用 Supabase Realtime Broadcast 傳 JSON 字串
+//        JSON.stringify 保留陣列格式，不會被資料庫破壞
+// ═══════════════════════════════════════════════════════
+
+const SUPABASE_URL = "https://hoglrqbfgsfucgeuueol.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rF2UgXFQw1aZNS7FgUFsCg_B0gGR2EB";
+
+let sbClient = null;
+let sbChannel = null;
+
+let online = {
+  enabled: false,
+  roomCode: null,
+  playerSide: null,
+  playerId: (window.crypto && crypto.randomUUID ? crypto.randomUUID() : ("p_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36))),
+  isApplyingRemote: false
+};
+
+function initSupabase(){
+  if(sbClient) return;
+  sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
+
+function makeRoomCode(){
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for(let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+// ── 取得要同步的遊戲狀態（JSON 安全，保留陣列） ──
+function getPublicState(){
+  return {
+    turn: state.turn,
+    boards: state.boards,
+    hands: state.hands,
+    traps: state.traps || { red: [], blue: [] },
+    trapCardGiven: state.trapCardGiven || { red: false, blue: false },
+    skillCards: state.skillCards || { red: [], blue: [] },
+    skillCharge: state.skillCharge || { red: 0, blue: 0 },
+    skillSpinChance: state.skillSpinChance || { red: 20, blue: 20 },
+    freezeNext: state.freezeNext || { red: false, blue: false },
+    burstBowReady: state.burstBowReady || { red: false, blue: false },
+    skillSpinUi: state.skillSpinUi || { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } },
+    actionDone: state.actionDone,
+    gameOver: state.gameOver,
+    logText: document.getElementById("log") ? document.getElementById("log").textContent : ""
+  };
+}
+
+// ── 套用對手的狀態 ──
+function applyPublicState(remoteState){
+  if(!remoteState) return;
+  online.isApplyingRemote = true;
+
+  state = {
+    ...state,
+    ...remoteState,
+    selectedPiece: null,
+    selectedCard: null,
+    pendingSkill: null,
+    draggingCard: null,
+    draggingPiece: null,
+    dragPreviewSide: null,
+    dragPreviewIdx: null,
+    dropHandled: false
+  };
+
+  if(!state.traps) state.traps = { red: [], blue: [] };
+  if(!state.trapCardGiven) state.trapCardGiven = { red: false, blue: false };
+  ensureSkillState();
+  render();
+
+  if(remoteState.logText){
+    const logEl = document.getElementById("log");
+    if(logEl) logEl.textContent = remoteState.logText;
+  }
+
+  updateOnlineStatus();
+  online.isApplyingRemote = false;
+}
+
+// ── 推送狀態給對手 ──
+function syncPushGameState(reason = "update"){
+  if(!online.enabled || !sbChannel || online.isApplyingRemote) return Promise.resolve();
+
+  const payload = {
+    type: "gameState",
+    from: online.playerId,
+    state: getPublicState(),
+    reason
+  };
+
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: payload
+  });
+
+  return Promise.resolve();
+}
+
+function renderAndSync(reason = "update"){
+  render();
+  return syncPushGameState(reason);
+}
+
+function canUseOnlineTurn(){
+  if(!online.enabled) return true;
+  if(!online.playerSide || online.playerSide === "spectator") return false;
+  return online.playerSide === state.turn;
+}
+
+function updateOnlineStatus(message){
+  const el = document.getElementById("onlineStatus");
+  if(!el) return;
+
+  if(!online.enabled){
+    el.textContent = message || "目前是單機模式";
+    return;
+  }
+
+  const sideText = online.playerSide === "red" ? "紅方" : online.playerSide === "blue" ? "藍方" : "觀戰";
+  const turnText = state.turn === "red" ? "紅方" : "藍方";
+  const myTurn = online.playerSide === "spectator" ? "觀戰中，不能操作" :
+                 (online.playerSide === state.turn ? "✅ 輪到你" : "⏳ 等待對手");
+
+  el.textContent = message || `房間 ${online.roomCode}｜你是${sideText}｜${myTurn}`;
+}
+
+// ── 建立房間（紅方） ──
+async function createOnlineRoom(){
+  initSupabase();
+  const code = makeRoomCode();
+
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
+
+  state = createInitialState ? createInitialState() : state;
+  state.turn = "red";
+  state.actionDone = false;
+  state.gameOver = false;
+
+  online.enabled = true;
+  online.roomCode = code;
+  online.playerSide = "red";
+  online.isApplyingRemote = false;
+
+  const input = document.getElementById("roomCodeInput");
+  if(input) input.value = code;
+
+  // 建立 Supabase Realtime 頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }  // self:false = 自己送的不收到
+  });
+
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "join"){
+      // 藍方加入，推送完整狀態給他
+      updateOnlineStatus();
+      render();
+      setTimeout(() => syncPushGameState("welcome"), 200);
+      setLog("藍方已加入！紅方回合開始。");
+    } else if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
+  });
+
+  await sbChannel.subscribe();
+
+  updateOnlineStatus(`房間建立！房間碼：${code}，等待對手加入...`);
+  render();
+}
+
+// ── 加入房間（藍方） ──
+async function joinOnlineRoom(){
+  initSupabase();
+
+  const input = document.getElementById("roomCodeInput");
+  const code = (input && input.value ? input.value : "").trim().toUpperCase();
+
+  if(!code){ updateOnlineStatus("請先輸入房間碼。"); return; }
+
+  // 先清除舊頻道
+  if(sbChannel){ await sbClient.removeChannel(sbChannel); sbChannel = null; }
+
+  online.enabled = true;
+  online.roomCode = code;
+  online.playerSide = "blue";
+  online.isApplyingRemote = false;
+
+  // 建立頻道
+  sbChannel = sbClient.channel("room:" + code, {
+    config: { broadcast: { self: false } }
+  });
+
+  sbChannel.on("broadcast", { event: "game" }, ({ payload }) => {
+    if(!payload || payload.from === online.playerId) return;
+
+    if(payload.type === "gameState"){
+      applyPublicState(payload.state);
+    } else if(payload.type === "leave"){
+      setLog("對手已離開房間。");
+    }
+  });
+
+  await sbChannel.subscribe();
+
+  // 通知紅方自己加入了
+  sbChannel.send({
+    type: "broadcast",
+    event: "game",
+    payload: { type: "join", from: online.playerId }
+  });
+
+  updateOnlineStatus(`已加入房間 ${code}，等待紅方同步狀態...`);
+  render();
+}
+
+// ── 離開房間 ──
+async function leaveOnlineRoom(){
+  if(sbChannel){
+    sbChannel.send({
+      type: "broadcast",
+      event: "game",
+      payload: { type: "leave", from: online.playerId }
+    });
+    await sbClient.removeChannel(sbChannel);
+    sbChannel = null;
+  }
+
+  online.enabled = false;
+  online.roomCode = null;
+  online.playerSide = null;
+
+  updateOnlineStatus("已離開房間，目前是單機模式。");
+  render();
+}
+function setupOnlineButtons(){
+  const createBtn = document.getElementById("createRoomBtn");
+  const joinBtn = document.getElementById("joinRoomBtn");
+  const leaveBtn = document.getElementById("leaveRoomBtn");
+
+  if(createBtn) createBtn.addEventListener("click", createOnlineRoom);
+  if(joinBtn) joinBtn.addEventListener("click", joinOnlineRoom);
+  if(leaveBtn) leaveBtn.addEventListener("click", leaveOnlineRoom);
+  document.querySelectorAll(".spinSkillBtn").forEach(btn => {
+    btn.addEventListener("click", () => spinSkillWheel(btn.dataset.side));
+  });
+
+  updateOnlineStatus();
+}
+
+const SWORD = "sword";
+const SHIELD = "shield";
+const BOW = "bow";
+const CHARIOT = "chariot";
+const NUKE = "nuke";
+const TRAP = "trap";
+
+const ICONS = { sword: "↗", shield: "⬟", bow: "➹", chariot: "車", nuke: "☢", trap: "✦" };
+const CARD_NAMES = { sword: "劍", shield: "盾", bow: "弓箭", chariot: "車", nuke: "核彈", trap: "陷阱" };
+
+
+
+
+
+
+
+
+function assetFor(owner, type){
+  if(type === NUKE) return "nuke.png";
+  if(type === TRAP) return "trap.png";
+
+  // 素材全部放在 HTML 同一層，不使用 RED/BLUE 資料夾
+  if(owner === "red"){
+    if(type === SWORD) return "REDsword.png";
+    if(type === BOW) return "REDbow.png";
+    if(type === CHARIOT) return "REDchariot.png";
+    if(type === SHIELD) return "REDshield.png";
+  }
+
+  if(owner === "blue"){
+    if(type === SWORD) return "BLUEsword.png";
+    if(type === BOW) return "BLUEbow.png";
+    if(type === CHARIOT) return "BLUEchariot.png";
+    if(type === SHIELD) return "BLUEshield.png";
+  }
+
+  return "";
+}
+
+function makeAssetImg(src, className, fallbackText){
+  return `
+    <span class="${className}Wrap">
+      <img class="${className}" src="${src}" draggable="false" alt=""
+        onerror="this.remove(); this.parentElement.classList.add('assetMissing');">
+      <span class="${className}Fallback">${fallbackText}</span>
+    </span>
+  `;
+}
+
+function pieceVisualHTML(p){
+  const src = assetFor(p.owner, p.type);
+  return `
+    ${makeAssetImg(src, "pieceArt", ICONS[p.type] || "")}
+    <span class="pieceName">${CARD_NAMES[p.type]}</span>
+  `;
+}
+
+function cardVisualHTML(side, card){
+  const src = assetFor(side, card.type);
+  return makeAssetImg(src, "cardArt", ICONS[card.type] || "");
+}
+
+const CARD_DESC = {
+  sword: "前進一格，跨河後可前/上/下",
+  shield: "附身到棋子，可疊加護盾",
+  bow: "射同一橫列第一個敵人",
+  chariot: "可移動兩次，每次一格，小十字移動，之後休息3回合",
+  nuke: "摧毀 3x3 區域，護盾先破盾",
+  trap: "放置3格陷阱，只擋車；每人整局只有1張"
+};
+
+function createInitialState(){
+  const newState = {
+    turn: "red",
+    boards: { red: Array(25).fill(null), blue: Array(25).fill(null) },
+    hands: { red: [], blue: [] },
+    traps: { red: [], blue: [] },
+    trapCardGiven: { red: false, blue: false },
+    skillCards: { red: [], blue: [] },
+    skillCharge: { red: 0, blue: 0 },
+    skillSpinChance: { red: 20, blue: 20 },
+    freezeNext: { red: false, blue: false },
+    burstBowReady: { red: false, blue: false },
+    skillSpinUi: { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } },
+    selectedPiece: null,
+    selectedCard: null,
+    pendingSkill: null,
+    draggingCard: null,
+    draggingPiece: null,
+    dragPreviewSide: null,
+    dragPreviewIdx: null,
+    actionDone: false,
+    gameOver: false,
+    dropHandled: false
+  };
+
+  ["red","blue"].forEach(side => {
+    while(newState.hands[side].length < 3){
+      newState.hands[side].push(drawCardForSide(side, newState));
+    }
+  });
+
+  return newState;
+}
+
+
+const SKILL_FREEZE = "freeze";
+const SKILL_BURST_BOW = "burstBow";
+const SKILL_KNOCKBACK = "knockback";
+const SKILL_SELF_DESTRUCT = "selfDestruct";
+const SKILL_DRAGON = "dragon";
+
+const SKILL_NAMES = {
+  freeze: "凍結",
+  burstBow: "爆裂弓",
+  knockback: "擊退",
+  selfDestruct: "自爆",
+  dragon: "龍龍卡"
+};
+
+const SKILL_DESC = {
+  freeze: "敵方下一回合直接跳過",
+  burstBow: "下一次弓箭可射任意敵方棋子",
+  knockback: "全部敵人回到重生點",
+  selfDestruct: "引爆敵方所有車的九宮格",
+  dragon: "選擇一排或一列，消滅所有棋子"
+};
+
+const SKILL_ICONS = {
+  freeze: "❄",
+  burstBow: "💥➹",
+  knockback: "🌪↩",
+  selfDestruct: "💣☢",
+  dragon: "🐉🔥"
+};
+
+function randomSkillCard(){
+  const skills = [SKILL_FREEZE, SKILL_BURST_BOW, SKILL_KNOCKBACK, SKILL_SELF_DESTRUCT, SKILL_DRAGON];
+  return { type: skills[Math.floor(Math.random() * skills.length)] };
+}
+
+let state = createInitialState();
+
+function drawCardForSide(side, gameState = state){
+  const baseTypes = [SWORD, SHIELD, BOW, CHARIOT, NUKE];
+  const types = [...baseTypes];
+
+  // 陷阱：每位玩家整局只會出現 1 張，抽到/發到後就不會再有第二張。
+  if(!gameState.trapCardGiven[side]){
+    types.push(TRAP);
+  }
+
+  const type = types[Math.floor(Math.random() * types.length)];
+  if(type === TRAP){
+    gameState.trapCardGiven[side] = true;
+  }
+
+  return { type };
+}
+
+function randomHand(side, gameState = state){
+  return Array.from({length:3}, () => drawCardForSide(side, gameState));
+}
+
+function drawCard(side){
+  return drawCardForSide(side, state);
+}
+
+function row(i){ return Math.floor(i / 5); }
+function col(i){ return i % 5; }
+function idx(r,c){ return r * 5 + c; }
+function enemy(side){ return side === "red" ? "blue" : "red"; }
+function forwardDir(side){ return side === "red" ? 1 : -1; }
+function frontCol(side){ return side === "red" ? 4 : 0; }
+function backCol(side){ return side === "red" ? 0 : 4; }
+
+function trapKey(side, cellIdx){
+  return `${side}:${cellIdx}`;
+}
+
+function hasEnemyTrapForChariot(owner, boardSide, cellIdx){
+  const opponent = enemy(owner);
+  return state.traps && state.traps[opponent] && state.traps[opponent].includes(trapKey(boardSide, cellIdx));
+}
+
+function getTrapCells(boardSide, centerIdx){
+  // 陷阱一次放 3 格：拖曳到一格作為中心，預覽/放置同一欄的上中下 3 格。
+  const cells = [];
+  const centerRow = row(centerIdx);
+  const centerCol = col(centerIdx);
+
+  for(let r = centerRow - 1; r <= centerRow + 1; r++){
+    if(r < 0 || r > 4) continue;
+    cells.push({ side: boardSide, idx: idx(r, centerCol) });
+  }
+
+  return cells;
+}
+
+
+function renderTrapMarker(owner){
+  return `
+    <span class="trapMarker ${owner}TrapMarker">
+      <img class="trapMarkerImg" src="trap.png" draggable="false" alt="陷阱"
+        onerror="this.remove(); this.parentElement.classList.add('trapImgMissing');">
+      <span class="trapMarkerFallback">陷</span>
+    </span>
+  `;
+}
+
+function markTrapPreview(boardSide, centerIdx){
+  getTrapCells(boardSide, centerIdx).forEach(t => {
+    const cell = document.querySelector(`[data-side="${t.side}"][data-idx="${t.idx}"]`);
+    if(cell) cell.classList.add("dragTrapArea");
+  });
+
+  const center = document.querySelector(`[data-side="${boardSide}"][data-idx="${centerIdx}"]`);
+  if(center) center.classList.add("dragTrapCenter");
+}
+
+function placeTrapCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  if(!selected || selected.card.type !== TRAP) return;
+
+  const placed = getTrapCells(boardSide, cellIdx);
+  if(!state.traps[cur]) state.traps[cur] = [];
+
+  placed.forEach(t => {
+    const key = trapKey(t.side, t.idx);
+    if(!state.traps[cur].includes(key)) state.traps[cur].push(key);
+  });
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  setLog(`陷阱已設置 3 格。只有車會被擋住，其他棋子會當作不存在。`);
+  renderAndSync("placeTrapCard");
+}
+
+
+function countOwnedPieces(side){
+  let n = 0;
+  ["red","blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach(p => { if(p && p.owner === side) n++; });
+  });
+  return n;
+}
+
+
+function ensureSkillState(){
+  if(!state.skillCards) state.skillCards = { red: [], blue: [] };
+  if(!state.skillCharge) state.skillCharge = { red: 0, blue: 0 };
+  if(!state.skillSpinChance) state.skillSpinChance = { red: 20, blue: 20 };
+  if(!state.freezeNext) state.freezeNext = { red: false, blue: false };
+  if(!state.burstBowReady) state.burstBowReady = { red: false, blue: false };
+  if(!state.skillSpinUi) state.skillSpinUi = { red: { angle: 0, result: "尚未抽取", spinning: false }, blue: { angle: 0, result: "尚未抽取", spinning: false } };
+  ["red","blue"].forEach(side => {
+    if(!Array.isArray(state.skillCards[side])) state.skillCards[side] = [];
+    if(state.skillCards[side].length > 2) state.skillCards[side] = state.skillCards[side].slice(0, 2);
+  });
+}
+
+
+
+function getSkillSpinChance(side){
+  ensureSkillState();
+  const value = Number(state.skillSpinChance && state.skillSpinChance[side]);
+  if(!Number.isFinite(value)) return 20;
+  return Math.max(20, Math.min(100, value));
+}
+
+function buildSkillWheelBackground(chance){
+  const hitDeg = Math.max(20, Math.min(100, chance)) * 3.6;
+  const startDeg = -hitDeg / 2;
+  return `conic-gradient(
+      from ${startDeg}deg,
+      #67e8f9 0deg ${hitDeg}deg,
+      #5f6773 ${hitDeg}deg 144deg,
+      #747c87 144deg 216deg,
+      #5f6773 216deg 288deg,
+      #747c87 288deg 360deg
+    )`;
+}
+
+function renderSkills(){
+  ensureSkillState();
+
+  ["red","blue"].forEach(side => {
+    const handEl = document.getElementById(`skillHand-${side}`);
+    const chargeEl = document.getElementById(`skillChargeText-${side}`);
+    const spinBtn = document.getElementById(`spinSkillBtn-${side}`);
+    const resultEl = document.getElementById(`skillSpinResult-${side}`);
+    const wheelEl = document.getElementById(`skillWheel-${side}`);
+    const hintEl = document.getElementById(`skillLimitHint-${side}`);
+
+    if(!handEl || !chargeEl || !spinBtn || !resultEl || !wheelEl) return;
+
+    const charge = state.skillCharge[side] || 0;
+    const owned = ((state.skillCards && state.skillCards[side]) || []).length;
+    const chance = getSkillSpinChance(side);
+    const atLimit = owned >= 2;
+    chargeEl.textContent = `技能能量：${Math.min(charge, 2)} / 2｜機率 ${chance}%｜持有 ${owned}/2 張`;
+
+    const ui = (state.skillSpinUi && state.skillSpinUi[side]) ? state.skillSpinUi[side] : { angle: 0, result: "尚未抽取", spinning: false };
+    const spinning = !!ui.spinning;
+
+    const canSpin =
+      !state.gameOver &&
+      side === state.turn &&
+      charge >= 2 &&
+      !spinning &&
+      !atLimit &&
+      (!online.enabled || online.playerSide === side);
+
+    spinBtn.disabled = !canSpin;
+    const sideLabel = side === "red" ? "紅方" : "藍方";
+    const isMyButton = !online.enabled || online.playerSide === side;
+    if(spinning){
+      spinBtn.textContent = `${sideLabel}轉盤中...`;
+    } else if(canSpin){
+      spinBtn.textContent = `${sideLabel}抽技能！`;
+    } else if(isMyButton){
+      if(atLimit) spinBtn.textContent = `${sideLabel}技能已滿`;
+      else spinBtn.textContent = charge >= 2 ? `${sideLabel}等待回合` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    } else {
+      if(atLimit) spinBtn.textContent = `${sideLabel}技能已滿`;
+      else spinBtn.textContent = charge >= 2 ? `${sideLabel}已充能` : `${sideLabel}充能中 ${Math.min(charge,2)}/2`;
+    }
+
+    if(hintEl){
+      hintEl.className = `skillLimitHint ${atLimit ? "skillLimitFull" : "skillLimitSoft"}`;
+      hintEl.textContent = atLimit ? "技能卡數量已達上限（2/2），現在不能再抽。" : `技能卡上限：${owned}/2`;
+    }
+
+    wheelEl.style.transform = `rotate(${ui.angle || 0}deg)`;
+    wheelEl.style.background = buildSkillWheelBackground(chance);
+    const centerEl = wheelEl.querySelector(".skillWheelCenter");
+    if(centerEl) centerEl.textContent = `${chance}%`;
+    wheelEl.classList.toggle("isSpinning", spinning);
+
+    resultEl.textContent = spinning ? `轉動中...（${chance}%）` : (ui.result || "尚未抽取");
+    resultEl.classList.toggle("skillResultHit", !spinning && String(resultEl.textContent).includes("抽中"));
+    resultEl.classList.toggle("skillResultMiss", !spinning && String(resultEl.textContent).includes("未抽中"));
+    resultEl.classList.toggle("skillResultPending", spinning);
+
+    handEl.innerHTML = "";
+
+    const skills = state.skillCards[side] || [];
+
+    if(skills.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "skillEmpty";
+      empty.textContent = "目前沒有技能牌";
+      handEl.appendChild(empty);
+      return;
+    }
+
+    skills.forEach((skill, si) => {
+      const btn = document.createElement("button");
+      btn.className = `skillCard ${side}SkillCard`;
+      btn.disabled = state.gameOver || spinning || side !== state.turn || (online.enabled && online.playerSide !== side);
+
+      btn.innerHTML = `
+        <span class="skillIcon">${SKILL_ICONS[skill.type]}</span>
+        <strong>${SKILL_NAMES[skill.type]}</strong>
+        <small>${SKILL_DESC[skill.type]}</small>
+      `;
+
+      btn.addEventListener("click", () => useSkillCard(side, si));
+      handEl.appendChild(btn);
+    });
+  });
+}
+
+
+
+function spinSkillWheel(side){
+  ensureSkillState();
+
+  if(!side) side = state.turn;
+
+  if(online.enabled && online.playerSide !== side){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  if(side !== state.turn){
+    setLog("只能在自己的回合轉技能轉盤。");
+    return;
+  }
+
+  if((state.skillCards[side] || []).length >= 2){
+    setLog("技能卡數量已達上限（2/2），不能再抽技能。");
+    render();
+    return;
+  }
+
+  if((state.skillCharge[side] || 0) < 2){
+    setLog("技能能量還沒滿，兩次自己的回合後才能抽技能。");
+    return;
+  }
+
+  if(state.skillSpinUi && state.skillSpinUi[side] && state.skillSpinUi[side].spinning){
+    setLog("轉盤還在轉，請等結果出來。");
+    return;
+  }
+
+  const chance = getSkillSpinChance(side);
+  const hitDeg = chance * 3.6;
+
+  /*
+    成功機率：基礎 20%，若上一抽沒中，下一抽 +10%，最高 100%。
+    視覺停點也會跟目前機率同步：
+    - 抽中：停在青色區中央附近
+    - 沒中：停在灰色區中央，避開青色區
+  */
+  const success = Math.random() < (chance / 100);
+  const rewardSkill = success ? randomSkillCard() : null;
+
+  const visualStopDegree = success
+    ? (-hitDeg / 2 + Math.random() * hitDeg)
+    : (140 + Math.random() * 80);
+
+  const currentAngle = (state.skillSpinUi && state.skillSpinUi[side] && state.skillSpinUi[side].angle) || 0;
+  const fullSpins = 6 + Math.floor(Math.random() * 3);
+
+  // 輪盤 rotate(angle) 後，指針正下方看到的就是 -angle 的位置。
+  // 因此 finalAngle 要等於 -visualStopDegree，再加上整圈。
+  const targetRemainder = ((-visualStopDegree % 360) + 360) % 360;
+  const currentRemainder = ((currentAngle % 360) + 360) % 360;
+  let delta = targetRemainder - currentRemainder;
+  if(delta <= 0) delta += 360;
+
+  const finalAngle = currentAngle + fullSpins * 360 + delta;
+
+  state.skillCharge[side] = 0;
+  state.skillSpinUi[side] = {
+    angle: finalAngle,
+    result: "",
+    spinning: true
+  };
+
+  render();
+  if(typeof syncPushGameState === "function") syncPushGameState("spinSkillWheelStart");
+
+  const spinTurnSnapshot = state.turn;
+
+  setTimeout(() => {
+    ensureSkillState();
+
+    // 如果回合已換人（endTurn 先發生），不要再覆蓋 Firebase 上的新狀態
+    if(state.turn !== spinTurnSnapshot){
+      // 只更新本地 UI，不 push 到 Firebase
+      if(success && rewardSkill){
+        state.skillSpinChance[side] = 20;
+        if((state.skillCards[side] || []).length >= 2){
+          state.skillSpinUi[side] = { angle: finalAngle, result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}｜技能已滿`, spinning: false };
+        }else{
+          state.skillCards[side].push(rewardSkill);
+          state.skillSpinUi[side] = { angle: finalAngle, result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}`, spinning: false };
+        }
+      }else{
+        state.skillSpinChance[side] = Math.min(100, chance + 10);
+        state.skillSpinUi[side] = { angle: finalAngle, result: `未抽中｜下次 ${state.skillSpinChance[side]}%`, spinning: false };
+      }
+      render();
+      return;
+    }
+
+    if(success && rewardSkill){
+      state.skillSpinChance[side] = 20;
+      if((state.skillCards[side] || []).length >= 2){
+        state.skillSpinUi[side] = {
+          angle: finalAngle,
+          result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}｜技能已滿`,
+          spinning: false
+        };
+        setLog(`🎯 ${side === "red" ? "紅方" : "藍方"}轉盤抽中技能「${SKILL_NAMES[rewardSkill.type]}」，但技能上限只有 2 張，所以沒有獲得新技能。機率已重置為 20%。`);
+      }else{
+        state.skillCards[side].push(rewardSkill);
+        state.skillSpinUi[side] = {
+          angle: finalAngle,
+          result: `🎯 抽中：${SKILL_NAMES[rewardSkill.type]}`,
+          spinning: false
+        };
+        setLog(`🎯 ${side === "red" ? "紅方" : "藍方"}轉盤成功！獲得技能「${SKILL_NAMES[rewardSkill.type]}」。機率已重置為 20%。`);
+      }
+    }else{
+      state.skillSpinChance[side] = Math.min(100, chance + 10);
+      state.skillSpinUi[side] = {
+        angle: finalAngle,
+        result: `未抽中｜下次 ${state.skillSpinChance[side]}%`,
+        spinning: false
+      };
+      setLog(`${side === "red" ? "紅方" : "藍方"}轉盤未抽中，沒有獲得技能。下次機率提升到 ${state.skillSpinChance[side]}%。`);
+    }
+
+    render();
+    if(typeof syncPushGameState === "function") syncPushGameState("spinSkillWheelEnd");
+  }, 1800);
+}
+
+
+
+function showSkillCastBanner(side, skillType, subText){
+  const old = document.getElementById("skillCastBanner");
+  if(old) old.remove();
+
+  const banner = document.createElement("div");
+  banner.id = "skillCastBanner";
+  banner.className = `skillCastBanner ${side}CastBanner`;
+  banner.innerHTML = `
+    <div class="skillCastMain">
+      <span>${SKILL_ICONS[skillType] || "✨"}</span>
+      <span>${side === "red" ? "紅方" : "藍方"}使用技能・${SKILL_NAMES[skillType] || "技能"}</span>
+    </div>
+    <div class="skillCastSub">${subText || "技能發動！"}</div>
+  `;
+  document.body.appendChild(banner);
+  requestAnimationFrame(() => banner.classList.add("show"));
+  setTimeout(() => banner.remove(), 1500);
+}
+
+function getSpawnPriorityRows(preferredRow){
+  const rows = [preferredRow];
+  for(let d = 1; d < 5; d++){
+    if(preferredRow - d >= 0) rows.push(preferredRow - d);
+    if(preferredRow + d <= 4) rows.push(preferredRow + d);
+  }
+  return rows;
+}
+
+function getKnockbackSlotOrder(side, preferredRow){
+  const order = [];
+  let c = backCol(side);
+
+  while(c >= 0 && c <= 4){
+    getSpawnPriorityRows(preferredRow).forEach(r => {
+      order.push(idx(r, c));
+    });
+    c += forwardDir(side);
+  }
+
+  return order;
+}
+
+function buildKnockbackMoves(casterSide){
+  const targetOwner = enemy(casterSide);
+  const pieces = [];
+  const blocked = new Set();
+
+  state.boards[targetOwner].forEach((p, cellIdx) => {
+    if(p && p.owner !== targetOwner){
+      blocked.add(cellIdx);
+    }
+  });
+
+  ["red", "blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach((p, cellIdx) => {
+      if(!p || p.owner !== targetOwner) return;
+      const cellEl = document.querySelector(`[data-side="${boardSide}"][data-idx="${cellIdx}"]`);
+      pieces.push({
+        piece: { ...p },
+        fromSide: boardSide,
+        fromIdx: cellIdx,
+        fromRect: cellEl ? cellEl.getBoundingClientRect() : null,
+        preferredRow: row(cellIdx)
+      });
+    });
+  });
+
+  const assigned = new Set(blocked);
+  const moves = [];
+
+  pieces.forEach(info => {
+    const targetIdx = getKnockbackSlotOrder(targetOwner, info.preferredRow)
+      .find(candidate => !assigned.has(candidate));
+
+    if(targetIdx == null) return;
+    assigned.add(targetIdx);
+
+    moves.push({
+      ...info,
+      toSide: targetOwner,
+      toIdx: targetIdx
+    });
+  });
+
+  return moves;
+}
+
+function applyKnockbackMoves(moves){
+  if(!moves || !moves.length) return;
+  const targetOwner = moves[0].piece.owner;
+
+  ["red", "blue"].forEach(boardSide => {
+    state.boards[boardSide] = state.boards[boardSide].map(p => {
+      if(p && p.owner === targetOwner) return null;
+      return p;
+    });
+  });
+
+  moves.forEach(move => {
+    state.boards[move.toSide][move.toIdx] = {
+      ...move.piece,
+      crossed: false,
+      moved: false,
+      moveCount: 0
+    };
+  });
+}
+
+function animateKnockback(casterSide, moves){
+  showSkillCastBanner(casterSide, SKILL_KNOCKBACK, `${enemy(casterSide) === "red" ? "紅方" : "藍方"}全體被擊退到重生點！`);
+
+  requestAnimationFrame(() => {
+    moves.forEach((move, index) => {
+      const targetCell = document.querySelector(`[data-side="${move.toSide}"][data-idx="${move.toIdx}"]`);
+      if(targetCell){
+        setTimeout(() => {
+          targetCell.classList.add("knockbackTargetPulse");
+          setTimeout(() => targetCell.classList.remove("knockbackTargetPulse"), 980);
+        }, index * 40);
+      }
+
+      if(!move.fromRect || !targetCell) return;
+      const toRect = targetCell.getBoundingClientRect();
+      const dx = (toRect.left + toRect.width / 2) - (move.fromRect.left + move.fromRect.width / 2);
+      const dy = (toRect.top + toRect.height / 2) - (move.fromRect.top + move.fromRect.height / 2);
+
+      const ghost = document.createElement("div");
+      ghost.className = "knockbackGhost";
+      ghost.style.left = `${move.fromRect.left + move.fromRect.width / 2}px`;
+      ghost.style.top = `${move.fromRect.top + move.fromRect.height / 2}px`;
+      ghost.style.setProperty("--dx", `${dx}px`);
+      ghost.style.setProperty("--dy", `${dy}px`);
+      ghost.style.animationDelay = `${index * 40}ms`;
+      ghost.innerHTML = `<div class="piece ${move.piece.owner}Piece ${move.piece.type}Piece ${(move.piece.shields || 0) > 0 ? "shielded" : ""}">${pieceVisualHTML(move.piece)}</div>`;
+      document.body.appendChild(ghost);
+      ghost.addEventListener("animationend", () => ghost.remove());
+    });
+  });
+}
+
+function buildSelfDestructTargets(casterSide){
+  const targetOwner = enemy(casterSide);
+  const chariots = [];
+  const hitMap = new Map();
+
+  ["red","blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach((p, cellIdx) => {
+      if(!p || p.owner !== targetOwner || p.type !== CHARIOT) return;
+
+      chariots.push({ boardSide, idx: cellIdx });
+
+      for(let r = row(cellIdx) - 1; r <= row(cellIdx) + 1; r++){
+        for(let c = col(cellIdx) - 1; c <= col(cellIdx) + 1; c++){
+          if(r < 0 || r > 4 || c < 0 || c > 4) continue;
+          const targetIdx = idx(r, c);
+          hitMap.set(`${boardSide}:${targetIdx}`, { boardSide, idx: targetIdx });
+        }
+      }
+    });
+  });
+
+  return { chariots, cells: Array.from(hitMap.values()) };
+}
+
+function applySelfDestructTargets(data){
+  if(!data) return;
+  data.cells.forEach(cell => {
+    if(state.boards[cell.boardSide][cell.idx]){
+      state.boards[cell.boardSide][cell.idx] = null;
+    }
+  });
+}
+
+function animateSelfDestruct(casterSide, data){
+  showSkillCastBanner(casterSide, SKILL_SELF_DESTRUCT, `${enemy(casterSide) === "red" ? "紅方" : "藍方"}所有車輛連鎖自爆！`);
+
+  requestAnimationFrame(() => {
+    data.chariots.forEach((center, index) => {
+      const centerCell = document.querySelector(`[data-side="${center.boardSide}"][data-idx="${center.idx}"]`);
+      if(centerCell){
+        setTimeout(() => {
+          centerCell.classList.add("selfDestructCore");
+          setTimeout(() => centerCell.classList.remove("selfDestructCore"), 1200);
+        }, index * 120);
+      }
+    });
+
+    data.cells.forEach((cell, index) => {
+      const blastCell = document.querySelector(`[data-side="${cell.boardSide}"][data-idx="${cell.idx}"]`);
+      if(blastCell){
+        setTimeout(() => {
+          blastCell.classList.add("selfDestructBlast");
+          setTimeout(() => blastCell.classList.remove("selfDestructBlast"), 1400);
+        }, index * 45);
+      }
+    });
+  });
+}
+
+function buildDragonLineTargets(axis, lineIndex){
+  const cells = [];
+  ["red", "blue"].forEach(boardSide => {
+    for(let i = 0; i < 25; i++){
+      const hit = axis === "row" ? row(i) === lineIndex : col(i) === lineIndex;
+      if(hit) cells.push({ boardSide, idx: i, piece: state.boards[boardSide][i] ? { ...state.boards[boardSide][i] } : null });
+    }
+  });
+  return { axis, lineIndex, cells };
+}
+
+function applyDragonLineTargets(data){
+  data.cells.forEach(cell => {
+    if(state.boards[cell.boardSide][cell.idx]) state.boards[cell.boardSide][cell.idx] = null;
+  });
+}
+
+function animateDragonFly(startX, startY, dx, dy, rotation){
+  const flyer = document.createElement("div");
+  flyer.className = "dragonFlyer";
+  flyer.style.left = `${startX}px`;
+  flyer.style.top = `${startY}px`;
+  flyer.style.setProperty("--dx", `${dx}px`);
+  flyer.style.setProperty("--dy", `${dy}px`);
+  flyer.style.setProperty("--rot", `${rotation}deg`);
+  flyer.innerHTML = '<span class="dragonFlyerInner">🐉</span>';
+  document.body.appendChild(flyer);
+  flyer.addEventListener("animationend", () => flyer.remove());
+}
+
+function animateDragonStrike(casterSide, data){
+  const label = data.axis === "row" ? `第 ${data.lineIndex + 1} 排` : `第 ${data.lineIndex + 1} 列`;
+  showSkillCastBanner(casterSide, SKILL_DRAGON, `龍焰掃過${label}！`);
+
+  requestAnimationFrame(() => {
+    const activeCells = data.cells.map(cell => ({
+      ...cell,
+      el: document.querySelector(`[data-side="${cell.boardSide}"][data-idx="${cell.idx}"]`)
+    })).filter(x => x.el);
+
+    activeCells.forEach((cell, index) => {
+      setTimeout(() => {
+        cell.el.classList.add("dragonStrikeCell");
+        setTimeout(() => cell.el.classList.remove("dragonStrikeCell"), 1400);
+      }, index * 35);
+    });
+
+    if(data.axis === "row"){
+      const leftCell = document.querySelector(`[data-side="red"][data-idx="${idx(data.lineIndex, 0)}"]`);
+      const rightCell = document.querySelector(`[data-side="blue"][data-idx="${idx(data.lineIndex, 4)}"]`);
+      if(leftCell && rightCell){
+        const a = leftCell.getBoundingClientRect();
+        const b = rightCell.getBoundingClientRect();
+        const startX = a.left - 26;
+        const startY = a.top + a.height / 2;
+        const endX = b.left + b.width + 26;
+        const endY = b.top + b.height / 2;
+        animateDragonFly(startX, startY, endX - startX, endY - startY, 0);
+      }
+    }else{
+      ["red", "blue"].forEach(boardSide => {
+        const topCell = document.querySelector(`[data-side="${boardSide}"][data-idx="${idx(0, data.lineIndex)}"]`);
+        const bottomCell = document.querySelector(`[data-side="${boardSide}"][data-idx="${idx(4, data.lineIndex)}"]`);
+        if(topCell && bottomCell){
+          const a = topCell.getBoundingClientRect();
+          const b = bottomCell.getBoundingClientRect();
+          const startX = a.left + a.width / 2;
+          const startY = a.top - 24;
+          const endX = b.left + b.width / 2;
+          const endY = b.top + b.height + 24;
+          animateDragonFly(startX, startY, endX - startX, endY - startY, 90);
+        }
+      });
+    }
+  });
+}
+
+function ensureDragonChoiceUI(){
+  let panel = document.getElementById("dragonChoicePanel");
+  if(panel) return panel;
+
+  panel = document.createElement("div");
+  panel.id = "dragonChoicePanel";
+  panel.className = "dragonChoicePanel";
+  panel.innerHTML = `
+    <div class="dragonChoiceBox">
+      <div class="dragonChoiceTitle">🐉 龍龍卡</div>
+      <div class="dragonChoiceText">選擇要消滅整排還是整列</div>
+      <div class="dragonChoiceActions">
+        <button type="button" class="dragonChoiceBtn" data-axis="row">整排</button>
+        <button type="button" class="dragonChoiceBtn" data-axis="col">整列</button>
+      </div>
+      <button type="button" class="dragonChoiceCancel">取消</button>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  panel.querySelectorAll(".dragonChoiceBtn").forEach(btn => {
+    btn.addEventListener("click", () => chooseDragonAxis(btn.dataset.axis));
+  });
+
+  panel.querySelector(".dragonChoiceCancel").addEventListener("click", cancelDragonChoice);
+  return panel;
+}
+
+function openDragonChoiceUI(){
+  const panel = ensureDragonChoiceUI();
+  panel.classList.add("dragonChoiceOpen");
+}
+
+function closeDragonChoiceUI(){
+  const panel = document.getElementById("dragonChoicePanel");
+  if(panel) panel.classList.remove("dragonChoiceOpen");
+}
+
+function chooseDragonAxis(axis){
+  if(!state.pendingSkill || state.pendingSkill.type !== SKILL_DRAGON) return;
+  state.pendingSkill.axis = axis === "col" ? "col" : "row";
+  state.pendingSkill.choosing = false;
+  closeDragonChoiceUI();
+  setLog(`🐉 龍龍卡已選擇${state.pendingSkill.axis === "row" ? "整排" : "整列"}，請點一格施放。`);
+  render();
+}
+
+function cancelDragonChoice(){
+  if(state.pendingSkill && state.pendingSkill.type === SKILL_DRAGON){
+    state.pendingSkill = null;
+    closeDragonChoiceUI();
+    setLog("已取消龍龍卡。");
+    render();
+  }
+}
+
+function beginDragonSkill(side, skillIndex){
+  state.pendingSkill = { type: SKILL_DRAGON, side, skillIndex, axis: null, choosing: true };
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  setLog("🐉 請選擇龍龍卡要消滅整排或整列。");
+  openDragonChoiceUI();
+  render();
+}
+
+function castPendingDragonSkill(boardSide, cellIdx){
+  const pending = state.pendingSkill;
+  if(!pending || pending.type !== SKILL_DRAGON) return false;
+
+  if(!pending.axis){
+    setLog("請先在龍龍卡面板選擇整排或整列。");
+    openDragonChoiceUI();
+    return true;
+  }
+
+  const side = pending.side;
+  const lineIndex = pending.axis === "row" ? row(cellIdx) : col(cellIdx);
+  const data = buildDragonLineTargets(pending.axis, lineIndex);
+
+  if(!state.skillCards[side] || !state.skillCards[side][pending.skillIndex] || state.skillCards[side][pending.skillIndex].type !== SKILL_DRAGON){
+    state.pendingSkill = null;
+    closeDragonChoiceUI();
+    setLog("龍龍卡不存在或已失效。");
+    render();
+    return true;
+  }
+
+  state.skillCards[side].splice(pending.skillIndex, 1);
+  state.pendingSkill = null;
+  closeDragonChoiceUI();
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  applyDragonLineTargets(data);
+  setLog(`🐉 ${side === "red" ? "紅方" : "藍方"}使用龍龍卡！${pending.axis === "row" ? `第 ${lineIndex + 1} 排` : `第 ${lineIndex + 1} 列`}的所有棋子都被龍焰摧毀。`);
+  renderAndSync("useDragonSkill");
+  setTimeout(() => animateDragonStrike(side, data), 40);
+  return true;
+}
+
+function useSkillCard(side, skillIndex){
+  ensureSkillState();
+
+  if(state.gameOver) return;
+
+  if(side !== state.turn){
+    setLog("只能在自己的回合使用技能。");
+    return;
+  }
+
+  if(online.enabled && online.playerSide !== side){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  const skill = state.skillCards[side][skillIndex];
+  if(!skill) return;
+
+  if(skill.type === SKILL_FREEZE){
+    const target = enemy(side);
+    state.freezeNext[target] = true;
+    state.skillCards[side].splice(skillIndex, 1);
+    setLog(`❄ ${side === "red" ? "紅方" : "藍方"}使用凍結！${target === "red" ? "紅方" : "藍方"}下一回合將跳過。`);
+    renderAndSync("useFreeze");
+    return;
+  }
+
+  if(skill.type === SKILL_BURST_BOW){
+    state.burstBowReady[side] = true;
+    state.skillCards[side].splice(skillIndex, 1);
+    setLog(`💥➹ 爆裂弓已啟動！你的下一次弓箭攻擊可以射任意敵方棋子。`);
+    renderAndSync("useBurstBow");
+    return;
+  }
+
+  if(skill.type === SKILL_KNOCKBACK){
+    const moves = buildKnockbackMoves(side);
+    state.skillCards[side].splice(skillIndex, 1);
+    state.selectedPiece = null;
+    state.selectedCard = null;
+
+    if(moves.length === 0){
+      setLog(`🌪 ${side === "red" ? "紅方" : "藍方"}使用擊退，但場上沒有可擊退的敵方棋子。`);
+      showSkillCastBanner(side, SKILL_KNOCKBACK, "場上沒有敵人，技能已消耗。");
+      renderAndSync("useKnockbackEmpty");
+      return;
+    }
+
+    applyKnockbackMoves(moves);
+    setLog(`🌪 ${side === "red" ? "紅方" : "藍方"}使用擊退！全部敵人回到重生點。`);
+    renderAndSync("useKnockback");
+    setTimeout(() => animateKnockback(side, moves), 40);
+    return;
+  }
+
+  if(skill.type === SKILL_DRAGON){
+    beginDragonSkill(side, skillIndex);
+    return;
+  }
+
+  if(skill.type === SKILL_SELF_DESTRUCT){
+    const data = buildSelfDestructTargets(side);
+    state.skillCards[side].splice(skillIndex, 1);
+    state.selectedPiece = null;
+    state.selectedCard = null;
+
+    if(data.chariots.length === 0){
+      setLog(`💣 ${side === "red" ? "紅方" : "藍方"}使用自爆，但敵方場上沒有車。`);
+      showSkillCastBanner(side, SKILL_SELF_DESTRUCT, "敵方沒有車，自爆沒有造成任何效果。")
+      renderAndSync("useSelfDestructEmpty");
+      return;
+    }
+
+    applySelfDestructTargets(data);
+    setLog(`💣 ${side === "red" ? "紅方" : "藍方"}使用自爆！敵方所有車的九宮格連鎖爆炸，不分敵我全部消滅。`);
+    renderAndSync("useSelfDestruct");
+    setTimeout(() => animateSelfDestruct(side, data), 40);
+    return;
+  }
+}
+
+function skipFrozenTurnIfNeeded(nextSide){
+  ensureSkillState();
+
+  if(!state.freezeNext[nextSide]) return false;
+
+  const skipped = nextSide;
+  const back = enemy(nextSide);
+  state.freezeNext[skipped] = false;
+
+  state.turn = back;
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  state.draggingCard = null;
+  state.draggingPiece = null;
+  state.dragPreviewSide = null;
+  state.dragPreviewIdx = null;
+  state.actionDone = false;
+
+  state.skillCharge[back] = Math.min((state.skillCharge[back] || 0) + 1, 2);
+
+  while(state.hands[back].length < 3 && countOwnedPieces(back) + state.hands[back].length < 6){
+    if(typeof drawCardForSide === "function") state.hands[back].push(drawCardForSide(back, state));
+    else state.hands[back].push(drawCard(back));
+  }
+
+  setLog(`❄ ${skipped === "red" ? "紅方" : "藍方"}被凍結，跳過一回合！${back === "red" ? "紅方" : "藍方"}回合開始。`);
+  return true;
+}
+
+function render(){
+  renderBoard("red");
+  renderBoard("blue");
+  renderHand("red");
+  renderHand("blue");
+  renderTurn();
+  renderSkills();
+  highlight();
+  applyDragPreviewClasses();
+}
+
+function renderBoard(side){
+  const boardEl = document.getElementById(side + "Board");
+  boardEl.innerHTML = "";
+
+  for(let i = 0; i < 25; i++){
+    const cell = document.createElement("button");
+    cell.className = "cell";
+    cell.dataset.side = side;
+    cell.dataset.idx = i;
+
+    if(col(i) === frontCol(side)){
+      const tag = document.createElement("span");
+      tag.className = "frontTag";
+      tag.textContent = "前線";
+      cell.appendChild(tag);
+    }
+
+    cell.addEventListener("dragenter", e => {
+      if(handleDragPreview(side, i)){
+        e.preventDefault();
+      }
+    });
+
+    cell.addEventListener("dragover", e => {
+      if(handleDragPreview(side, i)){
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+      }
+    });
+
+    cell.addEventListener("drop", e => {
+      e.preventDefault();
+      handleDropOnCell(side, i);
+    });
+
+    ["red","blue"].forEach(trapOwner => {
+      if(state.traps && state.traps[trapOwner] && state.traps[trapOwner].includes(trapKey(side, i))){
+        cell.classList.add("hasTrapMarker");
+        cell.insertAdjacentHTML("beforeend", renderTrapMarker(trapOwner));
+      }
+    });
+
+    const p = state.boards[side][i];
+    if(p){
+      const piece = document.createElement("div");
+      piece.className = `piece ${p.owner}Piece ${p.type}Piece`;
+      if((p.shields || 0) > 0) piece.classList.add("shielded");
+      piece.innerHTML = `
+        ${pieceVisualHTML(p)}
+        ${p.cd > 0 ? `<span class="cooldown">${p.type === CHARIOT ? "休息" : "冷卻"} ${p.cd}</span>` : ""}
+      `;
+
+      const canDragPiece =
+        p.owner === state.turn &&
+        (!online.enabled || online.playerSide === p.owner) &&
+        !state.gameOver &&
+        !state.actionDone &&
+        p.cd === 0 &&
+        (p.type === SWORD || p.type === BOW || p.type === CHARIOT);
+
+      piece.draggable = canDragPiece;
+
+      if(canDragPiece){
+        piece.addEventListener("dragstart", e => {
+          state.selectedCard = null;
+          state.selectedPiece = { side, idx: i };
+          state.draggingCard = null;
+          state.draggingPiece = { side, idx: i };
+          state.dragPreviewSide = null;
+          state.dragPreviewIdx = null;
+          e.dataTransfer.setData("text/plain", `piece:${side}:${i}`);
+          e.dataTransfer.effectAllowed = "move";
+          setTimeout(render, 0);
+        });
+
+        piece.addEventListener("dragend", () => {
+          state.draggingPiece = null;
+          state.dragPreviewSide = null;
+          state.dragPreviewIdx = null;
+          if(state.dropHandled){
+            state.dropHandled = false;
+            return;
+          }
+          render();
+        });
+      }
+
+      cell.appendChild(piece);
+
+      if((p.shields || 0) > 0){
+        cell.classList.add("shieldedCell");
+        const badge = document.createElement("span");
+        badge.className = "shieldCount";
+        badge.dataset.count = p.shields;
+        cell.appendChild(badge);
+      }
+    }
+
+    cell.addEventListener("click", () => handleCellClick(side, i));
+    boardEl.appendChild(cell);
+  }
+}
+
+function renderHand(side){
+  const hand = state.hands[side];
+  document.getElementById(side + "HandTitle").textContent =
+    `手牌 (${hand.length}/3)｜最多共 6 張`;
+
+  const handEl = document.getElementById(side + "Hand");
+  handEl.innerHTML = "";
+
+  hand.forEach((card, ci) => {
+    const btn = document.createElement("button");
+    const active = state.turn === side && !state.actionDone && !state.gameOver && (!online.enabled || online.playerSide === side);
+    const selected = state.selectedCard && state.selectedCard.side === side && state.selectedCard.ci === ci;
+
+    btn.className = `card ${side}Card ${selected ? "selectedCard" : ""}`;
+    if(!active) btn.classList.add("disabledCard");
+
+    btn.draggable = active;
+
+    if(active){
+      btn.addEventListener("dragstart", e => {
+        state.selectedPiece = null;
+        state.selectedCard = {side, ci, card};
+        state.draggingPiece = null;
+        state.draggingCard = {side, ci, card};
+        state.dragPreviewSide = null;
+        state.dragPreviewIdx = null;
+        e.dataTransfer.setData("text/plain", `card:${card.type}:${ci}`);
+        e.dataTransfer.effectAllowed = "move";
+
+        if(card.type === NUKE) setLog("拖曳核彈到敵方格子，會顯示 3x3 爆炸範圍。");
+        else if(card.type === TRAP) setLog("拖曳陷阱到任一格，會設置上中下 3 格；只會擋車。");
+        else if(card.type === SHIELD) setLog("拖曳盾到自己的棋子上，可以疊加護盾。");
+        else setLog(`拖曳${CARD_NAMES[card.type]}到可放置格。`);
+
+        setTimeout(render, 0);
+      });
+
+      btn.addEventListener("dragend", () => {
+        state.draggingCard = null;
+        state.dragPreviewSide = null;
+        state.dragPreviewIdx = null;
+        if(state.dropHandled){
+          state.dropHandled = false;
+          return;
+        }
+        render();
+      });
+    }
+
+    btn.innerHTML = `
+      ${cardVisualHTML(side, card)}
+      <strong>${CARD_NAMES[card.type]}</strong>
+      <small>${CARD_DESC[card.type]}</small>
+    `;
+
+    if(active){
+      btn.addEventListener("click", () => {
+        state.selectedPiece = null;
+        state.pendingSkill = null;
+        state.draggingCard = null;
+        state.draggingPiece = null;
+        if(selected){
+          state.selectedCard = null;
+          setLog("已取消選牌");
+        }else{
+          state.selectedCard = {side, ci, card};
+          if(card.type === SHIELD) setLog("已選擇「盾」，綠色格子可套盾，也可以直接拖曳。");
+          else if(card.type === NUKE) setLog("已選擇「核彈」，選敵方格子作為 3x3 爆炸中心。");
+          else if(card.type === TRAP) setLog("已選擇「陷阱」，選一格後會設置上中下 3 格；只擋車。");
+          else setLog(`已選擇「${CARD_NAMES[card.type]}」，請選擇放置格。`);
+        }
+        render();
+      });
+    }
+
+    handEl.appendChild(btn);
+  });
+}
+
+function renderTurn(){
+  const label = document.getElementById("turnLabel");
+  const endBtn = document.getElementById("endTurnBtn");
+
+  const newClass = `turnLabel ${state.turn === "red" ? "redTurn" : "blueTurn"}`;
+  const newText = state.gameOver ? "遊戲結束" : `${state.turn === "red" ? "紅方" : "藍方"}回合`;
+
+  // 只在文字或顏色真的有變化時才播動畫
+  if(label.textContent !== newText || label.className !== newClass){
+    label.classList.add("turnLabelFlip");
+    label.addEventListener("animationend", () => label.classList.remove("turnLabelFlip"), { once: true });
+  }
+
+  label.className = newClass + (label.className.includes("turnLabelFlip") ? " turnLabelFlip" : "");
+  label.textContent = newText;
+
+  if(endBtn){
+    const canEnd = !online.enabled || online.playerSide === state.turn;
+    endBtn.disabled = !canEnd || state.gameOver;
+
+    if(state.actionDone && !state.gameOver && canEnd){
+      endBtn.classList.add("turnAlert");
+      endBtn.textContent = "結束回合";
+      endBtn.setAttribute("aria-label", "已完成動作，請結束回合");
+    }else{
+      endBtn.classList.remove("turnAlert");
+      endBtn.textContent = canEnd ? "結束回合" : "等待對手";
+      endBtn.setAttribute("aria-label", canEnd ? "結束回合" : "等待對手");
+    }
+  }
+  updateTurnParticles();
+  updateOnlineStatus();
+}
+
+function updateTurnParticles(){
+  const redPanel = document.querySelector(".redPanel");
+  const bluePanel = document.querySelector(".bluePanel");
+  [redPanel, bluePanel].forEach(panel => {
+    if(!panel) return;
+    panel.classList.remove("activeTurnPanel", "attackingParticlesRed", "attackingParticlesBlue");
+  });
+
+  if(state.gameOver) return;
+
+  const activePanel = state.turn === "red" ? redPanel : bluePanel;
+  if(!activePanel) return;
+
+  activePanel.classList.add("activeTurnPanel", state.turn === "red" ? "attackingParticlesRed" : "attackingParticlesBlue");
+}
+
+function handleCellClick(boardSide, cellIdx){
+  if(state.gameOver) return;
+  if(!canUseOnlineTurn()){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  const continuingChariot =
+    state.selectedPiece &&
+    state.actionDone === false &&
+    (() => {
+      const p = state.boards[state.selectedPiece.side][state.selectedPiece.idx];
+      return p && p.type === CHARIOT && (p.moveCount || 0) === 1 && p.owner === state.turn;
+    })();
+
+  if(state.actionDone && !continuingChariot) return;
+
+  if(state.pendingSkill && state.pendingSkill.type === SKILL_DRAGON){
+    castPendingDragonSkill(boardSide, cellIdx);
+    return;
+  }
+
+  if(state.selectedCard){
+    if(state.selectedCard.card.type === SHIELD){
+      applyShieldCard(boardSide, cellIdx);
+    }else if(state.selectedCard.card.type === NUKE){
+      useNukeCard(boardSide, cellIdx);
+    }else if(state.selectedCard.card.type === TRAP){
+      placeTrapCard(boardSide, cellIdx);
+    }else{
+      placeCard(boardSide, cellIdx);
+    }
+    return;
+  }
+
+  const clicked = state.boards[boardSide][cellIdx];
+
+  if(state.selectedPiece){
+    const from = state.selectedPiece;
+    if(from.side === boardSide && from.idx === cellIdx){
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    const attacker = state.boards[from.side][from.idx];
+    if(!attacker || attacker.owner !== state.turn){
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    if(attacker.type === SWORD){
+      const moves = getSwordMoves(from.side, from.idx);
+      if(moves.some(m => m.side === boardSide && m.idx === cellIdx)){
+        moveSword(from.side, from.idx, boardSide, cellIdx);
+        return;
+      }
+
+      const attacks = getSwordAttacks(from.side, from.idx);
+      if(attacks.some(a => a.side === boardSide && a.idx === cellIdx)){
+        attackPiece(from.side, from.idx, boardSide, cellIdx);
+        return;
+      }
+
+      setLog("無效移動");
+      state.selectedPiece = null;
+      render();
+      return;
+    }
+
+    if(attacker.type === CHARIOT){
+      const moves = getChariotMoves(from.side, from.idx);
+      if(moves.some(m => m.side === boardSide && m.idx === cellIdx)){
+        moveChariot(from.side, from.idx, boardSide, cellIdx);
+      }else{
+        setLog("車不能走這格。車一次走兩格，不能斜走。");
+        state.selectedPiece = null;
+        render();
+      }
+      return;
+    }
+
+    if(attacker.type === BOW){
+      const targets = getBowTargets(from.side, from.idx);
+      if(targets.some(t => t.side === boardSide && t.idx === cellIdx)){
+        attackPiece(from.side, from.idx, boardSide, cellIdx);
+      }else{
+        setLog("弓箭不能攻擊這格。弓箭只會射同一橫列的第一個敵人。");
+        state.selectedPiece = null;
+        render();
+      }
+      return;
+    }
+
+    return;
+  }
+
+  if(clicked && clicked.owner === state.turn){
+    state.selectedPiece = {side: boardSide, idx: cellIdx};
+    state.selectedCard = null;
+    state.pendingSkill = null;
+    render();
+  }
+}
+
+function placeCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  const card = selected.card;
+
+  if(boardSide !== cur){
+    setLog("只能放在自己的陣地。");
+    return;
+  }
+
+  if(state.boards[boardSide][cellIdx]){
+    setLog("這格已經有棋子。");
+    return;
+  }
+
+  if((card.type === SWORD || card.type === CHARIOT) && col(cellIdx) !== backCol(cur)){
+    setLog(`${CARD_NAMES[card.type]}只能放在自己底線。`);
+    return;
+  }
+
+  state.boards[cur][cellIdx] = {
+    type: card.type,
+    owner: cur,
+    crossed: false,
+    moved: false,
+    moveCount: 0,
+    shields: 0,
+    cd: card.type === BOW ? 2 : 0
+  };
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.actionDone = true;
+  setLog(`${cur === "red" ? "紅方" : "藍方"}放置了${CARD_NAMES[card.type]}。`);
+  renderAndSync("placeCard");
+}
+
+
+function useNukeCard(boardSide, cellIdx){
+  const cur = state.turn;
+  if(boardSide !== enemy(cur)){
+    setLog("核彈必須投放在敵方區域。");
+    return;
+  }
+
+  const hitCells = [];
+
+  for(let r = row(cellIdx)-1; r <= row(cellIdx)+1; r++){
+    for(let c = col(cellIdx)-1; c <= col(cellIdx)+1; c++){
+      if(r < 0 || r > 4 || c < 0 || c > 4) continue;
+
+      const targetIdx = idx(r,c);
+      hitCells.push(targetIdx);
+
+      const target = state.boards[boardSide][targetIdx];
+      if(!target) continue;
+
+      if((target.shields || 0) > 0){
+        target.shields -= 1;
+      }else{
+        state.boards[boardSide][targetIdx] = null;
+      }
+    }
+  }
+
+  const selected = state.selectedCard;
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  renderAndSync("useNukeCard");
+
+  hitCells.forEach((targetIdx, index) => {
+    const blastCell = document.querySelector(`[data-side="${boardSide}"][data-idx="${targetIdx}"]`);
+    if(blastCell){
+      setTimeout(() => {
+        blastCell.classList.add("nukeBlast");
+        setTimeout(() => {
+          blastCell.classList.remove("nukeBlast");
+        }, 1400);
+      }, index * 60);
+    }
+  });
+
+  setLog("☢ 核彈爆炸！3x3 區域受到摧毀。");
+}
+
+function canApplyDraggedShield(boardSide, cellIdx){
+  if(!state.selectedCard || state.selectedCard.card.type !== SHIELD) return false;
+  const p = state.boards[boardSide][cellIdx];
+  return !!(p && p.owner === state.turn && p.type !== SHIELD);
+}
+
+function applyShieldCard(boardSide, cellIdx){
+  const cur = state.turn;
+  const selected = state.selectedCard;
+  if(!selected || selected.card.type !== SHIELD) return;
+
+  const target = state.boards[boardSide][cellIdx];
+
+  if(!target || target.owner !== cur){
+    setLog("盾只能套在自己的棋子上。");
+    return;
+  }
+
+  target.shields = (target.shields || 0) + 1;
+
+  state.hands[cur].splice(selected.ci, 1);
+  state.selectedCard = null;
+  state.actionDone = true;
+  setLog(`${cur === "red" ? "紅方" : "藍方"}替${CARD_NAMES[target.type]}套上護盾，目前 ${target.shields} 層。`);
+  renderAndSync("applyShieldCard");
+}
+
+function getSwordMoves(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== SWORD) return [];
+
+  const moves = [];
+  const dir = forwardDir(p.owner);
+  const r = row(fromIdx);
+  const c = col(fromIdx);
+
+  if(!p.crossed){
+    const nextC = c + dir;
+    if(nextC >= 0 && nextC <= 4){
+      const nextIdx = idx(r, nextC);
+      if(!state.boards[fromSide][nextIdx]) moves.push({side: fromSide, idx: nextIdx, type: "move"});
+    }else{
+      const targetSide = enemy(p.owner);
+      const crossIdx = idx(r, frontCol(targetSide));
+      if(!state.boards[targetSide][crossIdx]) moves.push({side: targetSide, idx: crossIdx, type: "cross"});
+    }
+  }else{
+    [[r, c + dir], [r - 1, c], [r + 1, c]].forEach(([rr, cc]) => {
+      if(rr >= 0 && rr < 5 && cc >= 0 && cc < 5){
+        const targetIdx = idx(rr, cc);
+        if(!state.boards[fromSide][targetIdx]) moves.push({side: fromSide, idx: targetIdx, type: "move"});
+      }
+    });
+  }
+
+  return moves;
+}
+
+function getSwordAttacks(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== SWORD) return [];
+
+  const attacks = [];
+  const dir = forwardDir(p.owner);
+  const r = row(fromIdx);
+  const c = col(fromIdx);
+
+  const check = (side, rr, cc) => {
+    if(rr < 0 || rr > 4 || cc < 0 || cc > 4) return;
+    const targetIdx = idx(rr, cc);
+    const target = state.boards[side][targetIdx];
+    if(target && target.owner !== p.owner) attacks.push({side, idx: targetIdx});
+  };
+
+  if(!p.crossed){
+    const nextC = c + dir;
+    if(nextC < 0 || nextC > 4){
+      const targetSide = enemy(p.owner);
+      const entryC = frontCol(targetSide);
+      check(targetSide, r, entryC);
+      check(targetSide, r - 1, entryC);
+      check(targetSide, r + 1, entryC);
+    }
+  }else{
+    check(fromSide, r, c + dir);
+    check(fromSide, r - 1, c);
+    check(fromSide, r + 1, c);
+  }
+
+  return attacks;
+}
+
+
+
+function getChariotMoves(fromSide, fromIdx){
+  const p = state.boards[fromSide][fromIdx];
+  if(!p || p.type !== CHARIOT || p.cd > 0) return [];
+
+  const moves = [];
+  const options = [
+    [0, 1], [0, -1],
+    [1, 0], [-1, 0]
+  ];
+
+  options.forEach(([dr, dc]) => {
+    const rr = row(fromIdx) + dr;
+    const cc = col(fromIdx) + dc;
+
+    if(rr < 0 || rr > 4) return;
+
+    if(cc >= 0 && cc <= 4){
+      const targetIdx = idx(rr, cc);
+      const occupant = state.boards[fromSide][targetIdx];
+      const blocked = hasEnemyTrapForChariot(p.owner, fromSide, targetIdx);
+      if(blocked) return; // 陷阱擋住
+      if(!occupant){
+        moves.push({side: fromSide, idx: targetIdx}); // 空格，移動
+      } else if(occupant.owner !== p.owner){
+        moves.push({side: fromSide, idx: targetIdx}); // 有敵人，可以殺
+      }
+      // 有自己人則跳過
+      return;
+    }
+
+    const targetSide = enemy(p.owner);
+
+    if(cc > 4 && p.owner === "red"){
+      const over = cc - 5;
+      if(over >= 0 && over <= 4){
+        const targetIdx = idx(rr, over);
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
+          moves.push({side: targetSide, idx: targetIdx});
+        }
+      }
+    }
+
+    if(cc < 0 && p.owner === "blue"){
+      const over = 5 + cc;
+      if(over >= 0 && over <= 4){
+        const targetIdx = idx(rr, over);
+        const occupant = state.boards[targetSide][targetIdx];
+        const blocked = hasEnemyTrapForChariot(p.owner, targetSide, targetIdx);
+        if(!blocked && (!occupant || occupant.owner !== p.owner)){
+          moves.push({side: targetSide, idx: targetIdx});
+        }
+      }
+    }
+  });
+
+  return moves;
+}
+
+function moveChariot(fromSide, fromIdx, toSide, toIdx){
+  const p = state.boards[fromSide][fromIdx];
+
+  if(!p || p.cd > 0){
+    setLog(`車正在充能中，還有 ${p ? p.cd : 0} 回合。`);
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  const valid = getChariotMoves(fromSide, fromIdx)
+    .some(m => m.side === toSide && m.idx === toIdx);
+
+  if(!valid){
+    if(hasEnemyTrapForChariot(p.owner, toSide, toIdx)){
+      setLog("車被陷阱擋住了，不能通過這格。");
+    }else{
+      setLog("車只能小十字移動一格（前後上下），不能斜走。");
+    }
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  const movedTimes = p.moveCount || 0;
+
+  state.boards[fromSide][fromIdx] = null;
+  const victim = state.boards[toSide][toIdx];
+  if(victim && victim.owner !== p.owner){
+    setLog(`車殲滅了敵方的${CARD_NAMES[victim.type] || victim.type}！`);
+    state.actionDone = true;
+  }
+  state.boards[toSide][toIdx] = {
+    ...p,
+    moveCount: movedTimes + 1
+  };
+
+  if(movedTimes + 1 >= 2){
+    state.boards[toSide][toIdx].cd = 3;
+    state.boards[toSide][toIdx].moveCount = 0;
+    if(isWinningSword(toSide, toIdx)){
+    win(p.owner);
+    return;
+  }
+
+  state.selectedPiece = null;
+    state.actionDone = true;
+    setLog("車已移動兩次，進入充能狀態 3 回合。");
+  }else{
+    if(isWinningSword(toSide, toIdx)){
+      win(p.owner);
+      return;
+    }
+
+    state.selectedPiece = { side: toSide, idx: toIdx };
+    state.actionDone = false;
+    setLog("車已移動第一次，黃色格子還可以再走一次。");
+  }
+
+  renderAndSync("moveChariot");
+}
+
+function getBowTargets(fromSide, fromIdx){
+  const bow = state.boards[fromSide][fromIdx];
+  if(!bow || bow.type !== BOW || bow.cd > 0) return [];
+
+  const targets = [];
+  const r = row(fromIdx);
+  const owner = bow.owner;
+
+  if(state.burstBowReady && state.burstBowReady[owner]){
+    ["red","blue"].forEach(boardSide => {
+      state.boards[boardSide].forEach((p, pieceIdx) => {
+        if(p && p.owner !== owner){
+          targets.push({side: boardSide, idx: pieceIdx});
+        }
+      });
+    });
+    return targets;
+  }
+
+  const dir = forwardDir(owner);
+
+  let c = col(fromIdx) + dir;
+  while(c >= 0 && c <= 4){
+    const scanIdx = idx(r, c);
+    const p = state.boards[fromSide][scanIdx];
+    if(p && p.owner !== owner){
+      targets.push({side: fromSide, idx: scanIdx});
+      return targets;
+    }
+    c += dir;
+  }
+
+  const otherSide = enemy(owner);
+  c = frontCol(otherSide);
+  while(c >= 0 && c <= 4){
+    const scanIdx = idx(r, c);
+    const p = state.boards[otherSide][scanIdx];
+    if(p && p.owner !== owner){
+      targets.push({side: otherSide, idx: scanIdx});
+      return targets;
+    }
+    c += dir;
+  }
+
+  return targets;
+}
+
+function moveSword(fromSide, fromIdx, toSide, toIdx){
+  const p = state.boards[fromSide][fromIdx];
+  const move = getSwordMoves(fromSide, fromIdx).find(m => m.side === toSide && m.idx === toIdx);
+
+  if(!move){
+    setLog("無效移動");
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  state.boards[fromSide][fromIdx] = null;
+  state.boards[toSide][toIdx] = {
+    ...p,
+    crossed: move.type === "cross" ? true : p.crossed,
+    moved: true
+  };
+
+  state.selectedPiece = null;
+  state.actionDone = true;
+
+  if(isWinningSword(toSide, toIdx)){
+    win(p.owner);
+    return;
+  }
+
+  setLog(move.type === "cross" ? "劍跨河成功！" : "移動成功。");
+  renderAndSync("moveSword");
+}
+
+function attackPiece(fromSide, fromIdx, targetSide, targetIdx){
+  const attacker = state.boards[fromSide][fromIdx];
+  const defender = state.boards[targetSide][targetIdx];
+
+  if(!attacker || !defender || defender.owner === attacker.owner){
+    setLog("不能攻擊這格。");
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  if(attacker.type === BOW && attacker.cd > 0){
+    setLog(`弓箭冷卻中，還有 ${attacker.cd} 回合。`);
+    state.selectedPiece = null;
+    render();
+    return;
+  }
+
+  if((defender.shields || 0) > 0){
+    defender.shields -= 1;
+    setLog(`護盾擋住了攻擊！剩下 ${defender.shields} 層。`);
+  }else{
+    state.boards[targetSide][targetIdx] = null;
+    setLog(`${CARD_NAMES[attacker.type]}擊敗了${CARD_NAMES[defender.type]}。`);
+  }
+
+  if(attacker.type === BOW){
+    attacker.cd = 2;
+    if(state.burstBowReady && state.burstBowReady[attacker.owner]){
+      state.burstBowReady[attacker.owner] = false;
+      setLog("爆裂弓射擊完成，效果已消耗。");
+    }
+  }
+
+  state.selectedPiece = null;
+  state.actionDone = true;
+  renderAndSync("attackPiece");
+}
+
+function isWinningSword(boardSide, pieceIdx){
+  const p = state.boards[boardSide][pieceIdx];
+  if(!p) return false;
+
+  // 任何己方棋子只要到達敵方底線就直接獲勝
+  if(p.owner === "red"){
+    return boardSide === "blue" && col(pieceIdx) === backCol("blue");
+  }
+
+  return boardSide === "red" && col(pieceIdx) === backCol("red");
+}
+
+function win(side){
+  state.gameOver = true;
+  state.actionDone = true;
+  setLog(`🏆 ${side === "red" ? "紅方" : "藍方"}獲勝！劍攻到底線！`);
+  renderAndSync("win");
+
+  const oldBtn = document.getElementById("restartBtn");
+  if(oldBtn) oldBtn.remove();
+
+  const btn = document.createElement("button");
+  btn.id = "restartBtn";
+  btn.className = "restartBtn";
+  btn.textContent = "重新開始";
+  btn.addEventListener("click", restart);
+  document.getElementById("game").appendChild(btn);
+}
+
+function restart(){
+  if(online.enabled && online.playerSide !== "red"){
+    setLog("線上模式中，只有紅方可以重新開始。");
+    return;
+  }
+  state = createInitialState();
+  const btn = document.getElementById("restartBtn");
+  if(btn) btn.remove();
+  setLog("歡迎！紅方先手。");
+  renderAndSync("restart");
+}
+
+function endTurn(){
+  if(state.gameOver) return;
+  if(state.skillSpinUi && state.skillSpinUi[state.turn] && state.skillSpinUi[state.turn].spinning){
+    setLog("請先等技能轉盤轉完，再結束回合。");
+    return;
+  }
+  if(!canUseOnlineTurn()){
+    setLog("線上模式中，現在不是你的回合。");
+    return;
+  }
+
+  ["red","blue"].forEach(boardSide => {
+    state.boards[boardSide].forEach(p => {
+      if(!p) return;
+      p.moved = false;
+      if((p.type === BOW || p.type === CHARIOT) && p.owner === state.turn && p.cd > 0) p.cd--;
+      if(p.type === CHARIOT && p.owner === state.turn && p.cd === 0) p.moveCount = 0;
+    });
+  });
+
+  const next = enemy(state.turn);
+  state.turn = next;
+  ensureSkillState();
+  state.skillCharge[next] = Math.min((state.skillCharge[next] || 0) + 1, 2);
+  state.selectedPiece = null;
+  state.selectedCard = null;
+  state.pendingSkill = null;
+  closeDragonChoiceUI();
+  state.actionDone = false;
+
+  while(state.hands[next].length < 3 && countOwnedPieces(next) + state.hands[next].length < 6){
+    state.hands[next].push(drawCardForSide(next, state));
+  }
+
+  if(skipFrozenTurnIfNeeded(next)){
+    renderAndSync("endTurnFrozen");
+    return;
+  }
+
+  setLog(`${next === "red" ? "紅方" : "藍方"}回合開始。`);
+  renderAndSync("endTurn");
+}
+
+function highlight(){
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove("selectedCell", "moveCell", "attackCell", "placeCell", "shieldTargetCell", "dragShieldCell", "chariotMoveCell", "dragNukeArea", "dragNukeCenter", "dragTrapArea", "dragTrapCenter", "dragMoveTarget", "dragAttackTarget", "dragPlaceTarget");
+    cell.removeAttribute("data-moves-left");
+  });
+
+  if(state.selectedPiece){
+    const {side, idx: cellIdx} = state.selectedPiece;
+    const selected = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(selected) selected.classList.add("selectedCell");
+
+    const p = state.boards[side][cellIdx];
+
+    if(p && p.type === SWORD){
+      getSwordMoves(side, cellIdx).forEach(m => {
+        const cell = document.querySelector(`[data-side="${m.side}"][data-idx="${m.idx}"]`);
+        if(cell) cell.classList.add("moveCell");
+      });
+      getSwordAttacks(side, cellIdx).forEach(a => {
+        const cell = document.querySelector(`[data-side="${a.side}"][data-idx="${a.idx}"]`);
+        if(cell) cell.classList.add("attackCell");
+      });
+    }
+
+    if(p && p.type === CHARIOT && p.cd === 0){
+      const remaining = 2 - (p.moveCount || 0);
+      getChariotMoves(side, cellIdx).forEach(m => {
+        const cell = document.querySelector(`[data-side="${m.side}"][data-idx="${m.idx}"]`);
+        if(cell){
+          cell.classList.add("moveCell", "chariotMoveCell");
+          cell.dataset.movesLeft = remaining;
+        }
+      });
+    }
+
+    if(p && p.type === BOW && p.cd === 0){
+      getBowTargets(side, cellIdx).forEach(t => {
+        const cell = document.querySelector(`[data-side="${t.side}"][data-idx="${t.idx}"]`);
+        if(cell) cell.classList.add("attackCell");
+      });
+    }
+  }
+
+  if(state.pendingSkill && state.pendingSkill.type === SKILL_DRAGON){
+    document.querySelectorAll(".cell").forEach(cell => cell.classList.add("attackCell"));
+  }
+
+  if(state.selectedCard){
+    const cur = state.turn;
+    const card = state.selectedCard.card;
+
+    for(let i = 0; i < 25; i++){
+      const cell = document.querySelector(`[data-side="${cur}"][data-idx="${i}"]`);
+      if(!cell) continue;
+
+      if(card.type === SHIELD){
+        if(canApplyDraggedShield(cur, i)) cell.classList.add("shieldTargetCell");
+        continue;
+      }
+
+      if(card.type === NUKE){
+        const enemySide = enemy(cur);
+        const nukeCell = document.querySelector(`[data-side="${enemySide}"][data-idx="${i}"]`);
+        if(nukeCell) nukeCell.classList.add("attackCell");
+        continue;
+      }
+
+      if(card.type === TRAP){
+        ["red","blue"].forEach(trapSide => {
+          const trapCell = document.querySelector(`[data-side="${trapSide}"][data-idx="${i}"]`);
+          if(trapCell) trapCell.classList.add("trapPlaceCell");
+        });
+        continue;
+      }
+
+      if(state.boards[cur][i]) continue;
+
+      let valid = true;
+      if((card.type === SWORD || card.type === CHARIOT) && col(i) !== backCol(cur)) valid = false;
+
+      if(valid) cell.classList.add("placeCell");
+    }
+  }
+}
+
+
+function clearDragPreview(){
+  document.querySelectorAll(".cell").forEach(cell => {
+    cell.classList.remove("dragShieldCell", "dragNukeCenter", "dragNukeArea", "dragTrapArea", "dragTrapCenter", "dragMoveTarget", "dragAttackTarget");
+  });
+}
+
+function updateDragPreview(side, cellIdx){
+  clearDragPreview();
+
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+
+    if(card.type === SHIELD){
+      if(canApplyDraggedShield(side, cellIdx)){
+        const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+        if(cell) cell.classList.add("dragShieldCell");
+        return true;
+      }
+      return false;
+    }
+
+    if(card.type === NUKE){
+      if(side !== enemy(state.turn)) return false;
+      markNukePreview(side, cellIdx);
+      return true;
+    }
+
+    if(card.type === TRAP){
+      markTrapPreview(side, cellIdx);
+      return true;
+    }
+
+    if(card.type === SWORD || card.type === CHARIOT || card.type === BOW){
+      const oldSelected = state.selectedCard;
+      state.selectedCard = { side: state.turn, ci: state.draggingCard.ci, card };
+      highlight();
+      state.selectedCard = oldSelected;
+
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+      return !!(cell && cell.classList.contains("placeCell"));
+    }
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p) return false;
+
+    let valid = false;
+
+    if(p.type === SWORD){
+      valid = getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx) ||
+              getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx);
+    }
+
+    if(p.type === CHARIOT){
+      valid = getChariotMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+    }
+
+    if(p.type === BOW){
+      valid = getBowTargets(drag.side, drag.idx).some(t => t.side === side && t.idx === cellIdx);
+    }
+
+    if(valid){
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+      if(cell){
+        if(p.type === BOW) cell.classList.add("dragAttackTarget");
+        else cell.classList.add("dragMoveTarget");
+      }
+    }
+
+    return valid;
+  }
+
+  return false;
+}
+
+function markNukePreview(side, centerIdx){
+  for(let r = row(centerIdx)-1; r <= row(centerIdx)+1; r++){
+    for(let c = col(centerIdx)-1; c <= col(centerIdx)+1; c++){
+      if(r < 0 || r > 4 || c < 0 || c > 4) continue;
+      const targetIdx = idx(r,c);
+      const cell = document.querySelector(`[data-side="${side}"][data-idx="${targetIdx}"]`);
+      if(cell) cell.classList.add("dragNukeArea");
+    }
+  }
+
+  const center = document.querySelector(`[data-side="${side}"][data-idx="${centerIdx}"]`);
+  if(center) center.classList.add("dragNukeCenter");
+}
+
+
+
+
+function applyDragPreviewClasses(){
+  if(state.dragPreviewSide === null || state.dragPreviewIdx === null) return;
+
+  const side = state.dragPreviewSide;
+  const cellIdx = state.dragPreviewIdx;
+
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+
+    if(card.type === NUKE && side === enemy(state.turn)){
+      markNukePreview(side, cellIdx);
+      return;
+    }
+
+    if(card.type === TRAP){
+      markTrapPreview(side, cellIdx);
+      return;
+    }
+
+    const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(!cell) return;
+
+    if(card.type === SHIELD && canApplyDraggedShield(side, cellIdx)){
+      cell.classList.add("dragShieldCell");
+    }else if(isCurrentDropValid(side, cellIdx)){
+      cell.classList.add("dragPlaceTarget");
+    }
+  }
+
+  if(state.draggingPiece){
+    const cell = document.querySelector(`[data-side="${side}"][data-idx="${cellIdx}"]`);
+    if(!cell) return;
+
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p) return;
+
+    if(isCurrentDropValid(side, cellIdx)){
+      if(p.type === BOW || getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx)){
+        cell.classList.add("dragAttackTarget");
+      }else{
+        cell.classList.add("dragMoveTarget");
+      }
+    }
+  }
+}
+
+function handleDragPreview(side, cellIdx){
+  const changed = state.dragPreviewSide !== side || state.dragPreviewIdx !== cellIdx;
+  state.dragPreviewSide = side;
+  state.dragPreviewIdx = cellIdx;
+  if(changed) render();
+  return isCurrentDropValid(side, cellIdx);
+}
+
+function isCurrentDropValid(side, cellIdx){
+  if(state.draggingCard){
+    const card = state.draggingCard.card;
+    const cur = state.turn;
+
+    if(card.type === SHIELD){
+      return canApplyDraggedShield(side, cellIdx);
+    }
+
+    if(card.type === NUKE){
+      return side === enemy(cur);
+    }
+
+    if(card.type === TRAP){
+      return true;
+    }
+
+    if(side !== cur) return false;
+    if(state.boards[side][cellIdx]) return false;
+
+    if((card.type === SWORD || card.type === CHARIOT) && col(cellIdx) !== backCol(cur)){
+      return false;
+    }
+
+    return true;
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+    if(!p || p.owner !== state.turn || p.cd > 0) return false;
+
+    if(p.type === SWORD){
+      return getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx) ||
+             getSwordAttacks(drag.side, drag.idx).some(a => a.side === side && a.idx === cellIdx);
+    }
+
+    if(p.type === CHARIOT){
+      return getChariotMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+    }
+
+    if(p.type === BOW){
+      return getBowTargets(drag.side, drag.idx).some(t => t.side === side && t.idx === cellIdx);
+    }
+  }
+
+  return false;
+}
+
+function handleDropOnCell(side, cellIdx){
+  if(state.draggingCard){
+    const drag = state.draggingCard;
+    state.selectedCard = { side: drag.side, ci: drag.ci, card: drag.card };
+
+    if(!isCurrentDropValid(side, cellIdx)){
+      setLog("這個位置不能放。");
+      state.draggingCard = null;
+      state.dragPreviewSide = null;
+      state.dragPreviewIdx = null;
+      render();
+      return;
+    }
+
+    state.dropHandled = true;
+    state.draggingCard = null;
+    state.dragPreviewSide = null;
+    state.dragPreviewIdx = null;
+
+    if(drag.card.type === SHIELD){
+      applyShieldCard(side, cellIdx);
+    }else if(drag.card.type === NUKE){
+      useNukeCard(side, cellIdx);
+    }else if(drag.card.type === TRAP){
+      placeTrapCard(side, cellIdx);
+    }else{
+      placeCard(side, cellIdx);
+    }
+
+    return;
+  }
+
+  if(state.draggingPiece){
+    const drag = state.draggingPiece;
+    const p = state.boards[drag.side][drag.idx];
+
+    if(!p || !isCurrentDropValid(side, cellIdx)){
+      setLog("這個位置不能拖曳。");
+      state.draggingPiece = null;
+      state.dragPreviewSide = null;
+      state.dragPreviewIdx = null;
+      render();
+      return;
+    }
+
+    state.dropHandled = true;
+    state.draggingPiece = null;
+    state.dragPreviewSide = null;
+    state.dragPreviewIdx = null;
+    state.selectedPiece = { side: drag.side, idx: drag.idx };
+
+    if(p.type === SWORD){
+      const isMove = getSwordMoves(drag.side, drag.idx).some(m => m.side === side && m.idx === cellIdx);
+      if(isMove) moveSword(drag.side, drag.idx, side, cellIdx);
+      else attackPiece(drag.side, drag.idx, side, cellIdx);
+    }else if(p.type === CHARIOT){
+      moveChariot(drag.side, drag.idx, side, cellIdx);
+    }else if(p.type === BOW){
+      attackPiece(drag.side, drag.idx, side, cellIdx);
+    }
+  }
+}
+
+function setLog(msg){
+  document.getElementById("log").textContent = msg;
+}
+
+
+function wrapOnlineSync(){
+  // 各動作已直接同步到 Firebase。
+}
+
+document.getElementById("endTurnBtn").addEventListener("click", endTurn);
+
+// ══════════════════════════════════════════
+//  功能1：加入房間 Toast 動畫提示
+// ══════════════════════════════════════════
+function showJoinToast(msg, type = "success"){
+  const toast = document.getElementById("joinToast");
+  if(!toast) return;
+  toast.textContent = msg;
+  toast.className = "joinToast joinToastShow joinToast--" + type;
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.classList.remove("joinToastShow");
+  }, 3200);
+}
+
+// 攔截 updateOnlineStatus，在加入/建立房間時觸發 toast
+const _origUpdateStatus = updateOnlineStatus;
+updateOnlineStatus = function(message){
+  _origUpdateStatus.apply(this, arguments);
+  if(!message) return;
+  if(message.includes("房間建立")){
+    showJoinToast("✅ 房間已建立，等待對手加入...", "success");
+  } else if(message.includes("已加入房間")){
+    showJoinToast("🎮 已加入房間！準備開始", "success");
+  } else if(message.includes("已離開")){
+    showJoinToast("👋 已離開房間", "info");
+  }
+};
+
+// 對手加入時也提示（攔截 setLog）
+const _origSetLog = setLog;
+setLog = function(msg){
+  _origSetLog.apply(this, arguments);
+  if(msg && msg.includes("藍方已加入")){
+    showJoinToast("🎮 對手已加入！遊戲開始", "success");
+  } else if(msg && msg.includes("對手已離開")){
+    showJoinToast("⚠️ 對手已離開房間", "info");
+  }
+};
+
+// ══════════════════════════════════════════
+//  功能2：規則 Modal
+// ══════════════════════════════════════════
+const rulesModal = document.getElementById("rulesModal");
+const rulesToggleBtn = document.getElementById("rulesToggleBtn");
+const rulesModalClose = document.getElementById("rulesModalClose");
+const rulesModalBackdrop = document.getElementById("rulesModalBackdrop");
+
+function openRulesModal(){
+  if(!rulesModal) return;
+  rulesModal.classList.add("rulesModalOpen");
+  rulesModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("rulesBookViewing");
+}
+function closeRulesModal(){
+  if(!rulesModal) return;
+  rulesModal.classList.remove("rulesModalOpen");
+  rulesModal.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("rulesBookViewing");
+}
+
+function switchRulesPage(pageName){
+  const book = document.getElementById("rulesBook");
+  const pages = document.querySelectorAll(".rulesPage");
+  const tabs = document.querySelectorAll(".rulesBookTab");
+  if(!pageName || !pages.length) return;
+
+  if(book){
+    book.classList.remove("pageFlipping");
+    void book.offsetWidth;
+    book.classList.add("pageFlipping");
+  }
+
+  pages.forEach(page => {
+    const active = page.dataset.rulesPage === pageName;
+    page.classList.toggle("active", active);
+  });
+
+  tabs.forEach(tab => {
+    const active = tab.dataset.rulesPage === pageName;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+  });
+}
+
+if(rulesToggleBtn) rulesToggleBtn.addEventListener("click", openRulesModal);
+if(rulesModalClose) rulesModalClose.addEventListener("click", closeRulesModal);
+if(rulesModalBackdrop) rulesModalBackdrop.addEventListener("click", closeRulesModal);
+document.querySelectorAll(".rulesBookTab").forEach(tab => {
+  tab.addEventListener("click", () => switchRulesPage(tab.dataset.rulesPage));
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && rulesModal && rulesModal.classList.contains("rulesModalOpen")) closeRulesModal();
+});
+
+// ══════════════════════════════════════════
+//  功能4：攻擊方向箭頭動畫（純視覺，不影響遊戲）
+// ══════════════════════════════════════════
+function spawnAttackArrow(fromSide, fromIdx, toSide, toIdx){
+  // 取得格子 DOM
+  const fromCell = document.querySelector(`[data-side="${fromSide}"][data-idx="${fromIdx}"]`);
+  const toCell   = document.querySelector(`[data-side="${toSide}"][data-idx="${toIdx}"]`);
+  if(!fromCell || !toCell) return;
+
+  const fromR = fromCell.getBoundingClientRect();
+  const toR   = toCell.getBoundingClientRect();
+
+  const x1 = fromR.left + fromR.width  / 2;
+  const y1 = fromR.top  + fromR.height / 2;
+  const x2 = toR.left   + toR.width    / 2;
+  const y2 = toR.top    + toR.height   / 2;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  const arrow = document.createElement("div");
+  arrow.className = "attackArrow";
+  arrow.style.cssText = `
+    left: ${x1 + window.scrollX}px;
+    top:  ${y1 + window.scrollY}px;
+    width: ${len}px;
+    transform: rotate(${angle}deg);
+    --arrow-color: ${fromSide === "red" ? "rgba(255,80,100,.55)" : "rgba(80,160,255,.55)"};
+  `;
+  document.body.appendChild(arrow);
+
+  // 移除
+  arrow.addEventListener("animationend", () => arrow.remove());
+}
+
+// 攔截 attackPiece 加入箭頭動畫
+const _origAttackPiece = attackPiece;
+attackPiece = function(fromSide, fromIdx, targetSide, targetIdx){
+  spawnAttackArrow(fromSide, fromIdx, targetSide, targetIdx);
+  _origAttackPiece.apply(this, arguments);
+};
+
+// chariot 踏過戰線攻擊也加（在 moveChariot 裡）
+const _origMoveChariot = moveChariot;
+moveChariot = function(fromSide, fromIdx, toSide, toIdx){
+  // 如果跨邊就是攻擊
+  if(fromSide !== toSide){
+    spawnAttackArrow(fromSide, fromIdx, toSide, toIdx);
+  }
+  _origMoveChariot.apply(this, arguments);
+};
+
+
+setupOnlineButtons();
+wrapOnlineSync();
+render();
+
+// ══════════════════════════════════════════
+//  ✦ 河道粒子特效 — 金色星塵 + 紅藍魔法粒子
+// ══════════════════════════════════════════
+(function initRiverParticles(){
+  const river = document.querySelector('.river');
+  if(!river) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'riverParticles';
+  river.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  const PARTICLE_COUNT = 38;
+  const particles = [];
+
+  function randomBetween(a, b){ return a + Math.random() * (b - a); }
+
+  function randomColor(){
+    const palette = [
+      // 金色系
+      `rgba(243,211,122,${randomBetween(.55,.95).toFixed(2)})`,
+      `rgba(255,235,160,${randomBetween(.45,.85).toFixed(2)})`,
+      `rgba(255,200,80,${randomBetween(.40,.80).toFixed(2)})`,
+      // 紅色點綴
+      `rgba(255,110,130,${randomBetween(.30,.60).toFixed(2)})`,
+      // 藍色點綴
+      `rgba(100,180,255,${randomBetween(.30,.60).toFixed(2)})`,
+      // 白色閃光
+      `rgba(255,255,255,${randomBetween(.50,.90).toFixed(2)})`,
+    ];
+    return palette[Math.floor(Math.random() * palette.length)];
+  }
+
+  function spawnParticle(){
+    const w = canvas.width;
+    const h = canvas.height;
+    const size = randomBetween(1.2, 4.2);
+    const type = Math.random() < 0.5 ? 'star' : 'circle';
+    return {
+      x: randomBetween(8, w - 8),
+      y: randomBetween(0, h),
+      vx: randomBetween(-0.28, 0.28),
+      vy: randomBetween(-0.55, -0.18),   // 往上飄
+      size,
+      color: randomColor(),
+      alpha: randomBetween(0.5, 1.0),
+      alphaDir: Math.random() < 0.5 ? 1 : -1,
+      alphaSpeed: randomBetween(0.004, 0.012),
+      life: 1.0,
+      decay: randomBetween(0.0018, 0.0045),
+      type,
+      rotation: randomBetween(0, Math.PI * 2),
+      rotSpeed: randomBetween(-0.025, 0.025),
+    };
+  }
+
+  function drawStar(ctx, x, y, r, points, rotation){
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+    ctx.beginPath();
+    for(let i = 0; i < points * 2; i++){
+      const angle = (i * Math.PI) / points;
+      const rad = i % 2 === 0 ? r : r * 0.45;
+      ctx.lineTo(Math.cos(angle) * rad, Math.sin(angle) * rad);
+    }
+    ctx.closePath();
+    ctx.restore();
+  }
+
+  for(let i = 0; i < PARTICLE_COUNT; i++){
+    const p = spawnParticle();
+    p.y = Math.random() * (canvas.height || 400);  // scatter initial y
+    particles.push(p);
+  }
+
+  function resize(){
+    canvas.width  = river.offsetWidth;
+    canvas.height = river.offsetHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  let animId;
+  function animate(){
+    animId = requestAnimationFrame(animate);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for(let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      p.rotation += p.rotSpeed;
+
+      // alpha 呼吸
+      p.alpha += p.alphaSpeed * p.alphaDir;
+      if(p.alpha > 1){ p.alpha = 1; p.alphaDir = -1; }
+      if(p.alpha < 0.18){ p.alpha = 0.18; p.alphaDir = 1; }
+
+      if(p.life <= 0 || p.y < -10){
+        particles[i] = spawnParticle();
+        particles[i].y = canvas.height + 4;
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = p.alpha * p.life;
+
+      if(p.type === 'star'){
+        drawStar(ctx, p.x, p.y, p.size, 4, p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+        // 光暈
+        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.8);
+        grd.addColorStop(0, p.color.replace(/[\d.]+\)$/, '0.38)'));
+        grd.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2.8, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+      } else {
+        const grd = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
+        grd.addColorStop(0, p.color);
+        grd.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = grd;
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+  }
+  animate();
+})();
+
+// ── 橫直屏偵測：直屏顯示旋轉提示，橫屏用 zoom 縮放 ──
+function handleOrientation(){
+  const overlay = document.getElementById("rotateOverlay");
+  if(!overlay) return;
+
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const isMobile = ('ontouchstart' in window) || window.navigator.maxTouchPoints > 0;
+
+  if(isMobile && isPortrait){
+    overlay.style.display = "flex";
+    document.documentElement.style.zoom = "";
+    return;
+  }
+
+  overlay.style.display = "none";
+
+  if(isMobile){
+    // 橫屏：用 zoom 讓整個頁面等比縮小塞進畫面
+    // 先清 zoom 量真實頁面寬
+    document.documentElement.style.zoom = "";
+    const vw = window.innerWidth;
+    const pageW = document.documentElement.scrollWidth;
+    if(pageW > vw){
+      const zoom = vw / pageW;
+      document.documentElement.style.zoom = zoom;
+    }
+  } else {
+    document.documentElement.style.zoom = "";
+  }
+}
+
+handleOrientation();
+window.addEventListener("resize", handleOrientation);
+window.addEventListener("orientationchange", function(){
+  setTimeout(handleOrientation, 200);
+});
+
+const _origRender = render;
+render = function(){ _origRender.apply(this, arguments); handleOrientation(); };
+</script>
+</body>
+</html>
