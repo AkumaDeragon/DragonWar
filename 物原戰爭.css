@@ -6952,3 +6952,48 @@ body.rulesBookViewing {
     justify-items: center;
   }
 }
+
+/* =========================================================
+   修正：結束回合按鈕縮小 + 技能 +10% 提示保留
+   這段放在檔案最後，專門蓋掉前面把按鈕撐到 88x200 的規則。
+   ========================================================= */
+.riverEndTurnWrap {
+  width: 66px !important;
+  height: 126px !important;
+  min-width: 66px !important;
+  max-width: 66px !important;
+  min-height: 126px !important;
+  max-height: 126px !important;
+  margin: 10px 0 12px !important;
+}
+
+#endTurnBtn.riverEndTurnBtn,
+.riverEndTurnBtn {
+  width: 66px !important;
+  height: 126px !important;
+  padding: 9px 0 !important;
+  font-size: 16px !important;
+  line-height: 1.08 !important;
+  letter-spacing: .12em !important;
+  text-indent: .12em !important;
+  transform: none !important;
+}
+
+#endTurnBtn.riverEndTurnBtn.turnAlert,
+.riverEndTurnBtn.turnAlert {
+  font-size: 16px !important;
+  letter-spacing: .12em !important;
+  text-indent: .12em !important;
+}
+
+#endTurnBtn.riverEndTurnBtn:hover:not(:disabled),
+.riverEndTurnBtn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+}
+
+.skillResultMiss::after {
+  content: "  +10%";
+  color: var(--gold-3);
+  font-weight: 1000;
+  text-shadow: 0 0 10px rgba(243,211,122,.55);
+}

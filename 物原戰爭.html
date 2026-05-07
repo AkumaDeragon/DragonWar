@@ -157,7 +157,7 @@
               <span class="rulesPageMark">Ⅱ</span>
               <div>
                 <h3>技能頁</h3>
-                <p>每累積 2 次自己的回合可轉一次技能輪盤；基礎 20%，沒中下次 +10%。技能牌最多持有 2 張。</p>
+                <p>每累積 2 次自己的回合可轉一次技能輪盤；基礎 20%。如果這次沒抽中，下一次成功率 +10%，最高 100%；抽中後重置為 20%。技能牌最多持有 2 張。</p>
               </div>
             </div>
             <div class="skillBookList">
@@ -936,7 +936,7 @@ function spinSkillWheel(side){
         }
       }else{
         state.skillSpinChance[side] = Math.min(100, chance + 10);
-        state.skillSpinUi[side] = { angle: finalAngle, result: `未抽中｜下次 ${state.skillSpinChance[side]}%`, spinning: false };
+        state.skillSpinUi[side] = { angle: finalAngle, result: `未抽中｜+10%｜下次 ${state.skillSpinChance[side]}%`, spinning: false };
       }
       render();
       return;
@@ -964,10 +964,10 @@ function spinSkillWheel(side){
       state.skillSpinChance[side] = Math.min(100, chance + 10);
       state.skillSpinUi[side] = {
         angle: finalAngle,
-        result: `未抽中｜下次 ${state.skillSpinChance[side]}%`,
+        result: `未抽中｜+10%｜下次 ${state.skillSpinChance[side]}%`,
         spinning: false
       };
-      setLog(`${side === "red" ? "紅方" : "藍方"}轉盤未抽中，沒有獲得技能。下次機率提升到 ${state.skillSpinChance[side]}%。`);
+      setLog(`${side === "red" ? "紅方" : "藍方"}轉盤未抽中，沒有獲得技能。失敗補償 +10%，下次機率提升到 ${state.skillSpinChance[side]}%。`);
     }
 
     render();
