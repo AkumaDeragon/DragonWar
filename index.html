@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0" />
   <title>物原戰爭</title>
     <link rel="stylesheet" href="物原戰爭.css" />
 </head>
@@ -2982,6 +2982,7 @@ function handleOrientation(){
     // 電腦：完全正常顯示
     if(overlay) overlay.style.display = "none";
     document.body.classList.remove("mobileFixedViewport");
+    document.documentElement.classList.remove("mobileFixedViewport");
     game.style.transform = "";
     game.style.left = "";
     game.style.top = "";
@@ -2995,6 +2996,7 @@ function handleOrientation(){
     // 手機直屏：顯示旋轉提示，隱藏遊戲
     if(overlay) overlay.style.display = "flex";
     document.body.classList.remove("mobileFixedViewport");
+    document.documentElement.classList.remove("mobileFixedViewport");
     game.style.transform = "";
     game.style.position = "";
     game.style.left = "";
@@ -3007,6 +3009,7 @@ function handleOrientation(){
 
   // 先加 class，讓 CSS 把 game 設為固定 1500px，再量測。
   document.body.classList.add("mobileFixedViewport");
+  document.documentElement.classList.add("mobileFixedViewport");
 
   // 清除舊的 transform / position，讓 layout 回到正常流再量測。
   game.style.transform = "";
@@ -3041,6 +3044,13 @@ if(window.visualViewport){
 
 const _origRender = render;
 render = function(){ _origRender.apply(this, arguments); requestAnimationFrame(handleOrientation); };
+
+// 手機橫屏時阻止所有滑動／慣性捲動
+document.addEventListener("touchmove", function(e){
+  if(document.body.classList.contains("mobileFixedViewport")){
+    e.preventDefault();
+  }
+}, { passive: false });
 </script>
 </body>
 </html>

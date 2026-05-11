@@ -7021,12 +7021,13 @@ body.rulesBookViewing {
   letter-spacing: .12em !important;
 }
 
-body.mobileFixedViewport,
-body.mobileFixedViewport html {
+html.mobileFixedViewport,
+body.mobileFixedViewport {
   width: 100vw;
   height: 100vh;
   overflow: hidden !important;
   overscroll-behavior: none;
+  touch-action: none;
 }
 
 body.mobileFixedViewport #game {
