@@ -7025,9 +7025,10 @@ html.mobileFixedViewport,
 body.mobileFixedViewport {
   width: 100vw;
   height: 100vh;
-  overflow: hidden !important;
-  overscroll-behavior: none;
-  touch-action: none;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
 }
 
 body.mobileFixedViewport #game {

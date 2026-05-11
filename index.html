@@ -3019,7 +3019,7 @@ function handleOrientation(){
 
   // 用固定基準尺寸計算縮放（比 offsetHeight 量測更穩定）
   const fullW = 1500;
-  const fullH = 880;  // 遊戲主體約這個高度，不含底部 log
+  const fullH = 720;  // 調小讓縮放更大，填滿橫屏
 
   // 優先以寬度填滿橫屏，再檢查高度有沒有超出
   const scale = Math.min(vw / fullW, vh / fullH);
@@ -3046,12 +3046,25 @@ if(window.visualViewport){
 const _origRender = render;
 render = function(){ _origRender.apply(this, arguments); requestAnimationFrame(handleOrientation); };
 
-// 手機橫屏時阻止所有滑動／慣性捲動
+// 手機橫屏時只阻止左右滑動，允許上下捲動
 document.addEventListener("touchmove", function(e){
   if(document.body.classList.contains("mobileFixedViewport")){
-    e.preventDefault();
+    if(e.touches.length === 1){
+      // 判斷滑動方向，水平的才阻止
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - (e.target._startX || touch.clientX));
+      const dy = Math.abs(touch.clientY - (e.target._startY || touch.clientY));
+      if(dx > dy) e.preventDefault();
+    }
   }
 }, { passive: false });
+
+document.addEventListener("touchstart", function(e){
+  if(e.touches.length === 1){
+    e.target._startX = e.touches[0].clientX;
+    e.target._startY = e.touches[0].clientY;
+  }
+}, { passive: true });
 </script>
 </body>
 </html>
