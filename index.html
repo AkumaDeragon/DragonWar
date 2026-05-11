@@ -2978,61 +2978,72 @@ function handleOrientation(){
 
   document.documentElement.style.zoom = "";
 
-  if(!isMobile){
-    // 電腦：完全正常顯示
-    if(overlay) overlay.style.display = "none";
-    document.body.classList.remove("mobileFixedViewport");
-    document.documentElement.classList.remove("mobileFixedViewport");
+  // 取得或建立 wrapper
+  let wrapper = document.getElementById("gameScaleWrapper");
+
+  function unwrap(){
+    if(wrapper && game.parentNode === wrapper){
+      wrapper.parentNode.insertBefore(game, wrapper);
+      wrapper.remove();
+      wrapper = null;
+    }
     game.style.transform = "";
+    game.style.position = "";
     game.style.left = "";
     game.style.top = "";
-    game.style.position = "";
+    game.style.width = "";
+    document.body.classList.remove("mobileFixedViewport");
+    document.documentElement.classList.remove("mobileFixedViewport");
+    document.body.style.minHeight = "";
+  }
+
+  if(!isMobile){
+    if(overlay) overlay.style.display = "none";
+    unwrap();
     return;
   }
 
   const isLandscape = vw > vh;
 
   if(!isLandscape){
-    // 手機直屏：顯示旋轉提示，隱藏遊戲
     if(overlay) overlay.style.display = "flex";
-    document.body.classList.remove("mobileFixedViewport");
-    document.documentElement.classList.remove("mobileFixedViewport");
-    game.style.transform = "";
-    game.style.position = "";
-    game.style.left = "";
-    game.style.top = "";
+    unwrap();
     return;
   }
 
-  // 手機橫屏：隱藏 overlay，縮放遊戲到畫面內
+  // 手機橫屏
   if(overlay) overlay.style.display = "none";
-
-  // 先加 class，讓 CSS 把 game 設為固定 1500px，再量測。
   document.body.classList.add("mobileFixedViewport");
   document.documentElement.classList.add("mobileFixedViewport");
 
-  // 清除舊的 transform / position，讓 layout 回到正常流再量測。
-  game.style.transform = "";
-  game.style.position = "";
-  game.style.left = "";
-  game.style.top = "";
-
   const fullW = 1500;
-  const fullH = 720;
+  const scale = vw / fullW;   // 寬度撐滿，高度自然跟著縮
 
-  const scale = Math.min(vw / fullW, vh / fullH);
-  const offsetX = Math.max((vw - fullW * scale) / 2, 0);
-  const scaledH = fullH * scale;
+  // 確保 wrapper 存在
+  if(!wrapper){
+    wrapper = document.createElement("div");
+    wrapper.id = "gameScaleWrapper";
+    game.parentNode.insertBefore(wrapper, game);
+    wrapper.appendChild(game);
+  }
 
-  // 用 absolute 而非 fixed，這樣 body 才能上下捲動
-  game.style.position = "absolute";
+  // game 在 wrapper 內縮放，transform-origin top left
   game.style.transformOrigin = "top left";
-  game.style.left = offsetX + "px";
-  game.style.top  = "0px";
   game.style.transform = `scale(${scale})`;
+  game.style.position = "relative";
+  game.style.left = "0px";
+  game.style.top  = "0px";
+  game.style.width = fullW + "px";
+  game.style.maxWidth = "none";
 
-  // 讓 body 有足夠高度可以捲動（scaled 後的實際高度）
-  document.body.style.minHeight = (game.offsetHeight * scale) + "px";
+  // wrapper 的尺寸 = 縮放後的實際佔位
+  wrapper.style.width  = vw + "px";
+  wrapper.style.height = (game.offsetHeight * scale) + "px";
+  wrapper.style.overflow = "hidden";
+  wrapper.style.position = "relative";
+
+  // body 高度撐開讓 scroll 生效
+  document.body.style.minHeight = wrapper.style.height;
 }
 
 handleOrientation();
