@@ -3017,11 +3017,12 @@ function handleOrientation(){
   game.style.left = "";
   game.style.top = "";
 
-  // 此時 CSS 已把 game 寬度設為 1500px，直接用 offsetWidth / offsetHeight 量。
-  const fullW = game.offsetWidth  || 1500;
-  const fullH = game.offsetHeight || 900;
+  // 用固定基準尺寸計算縮放（比 offsetHeight 量測更穩定）
+  const fullW = 1500;
+  const fullH = 880;  // 遊戲主體約這個高度，不含底部 log
 
-  const scale = Math.min(vw / fullW, vh / fullH, 1);
+  // 優先以寬度填滿橫屏，再檢查高度有沒有超出
+  const scale = Math.min(vw / fullW, vh / fullH);
   const offsetX = Math.max((vw - fullW * scale) / 2, 0);
   const offsetY = Math.max((vh - fullH * scale) / 2, 0);
 
