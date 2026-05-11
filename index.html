@@ -3017,21 +3017,22 @@ function handleOrientation(){
   game.style.left = "";
   game.style.top = "";
 
-  // 用固定基準尺寸計算縮放（比 offsetHeight 量測更穩定）
   const fullW = 1500;
-  const fullH = 720;  // 調小讓縮放更大，填滿橫屏
+  const fullH = 720;
 
-  // 優先以寬度填滿橫屏，再檢查高度有沒有超出
   const scale = Math.min(vw / fullW, vh / fullH);
   const offsetX = Math.max((vw - fullW * scale) / 2, 0);
-  const offsetY = Math.max((vh - fullH * scale) / 2, 0);
+  const scaledH = fullH * scale;
 
-  // 套上 position fixed + transform，讓整個遊戲固定在畫面內。
-  game.style.position = "fixed";
+  // 用 absolute 而非 fixed，這樣 body 才能上下捲動
+  game.style.position = "absolute";
   game.style.transformOrigin = "top left";
   game.style.left = offsetX + "px";
-  game.style.top  = offsetY + "px";
+  game.style.top  = "0px";
   game.style.transform = `scale(${scale})`;
+
+  // 讓 body 有足夠高度可以捲動（scaled 後的實際高度）
+  document.body.style.minHeight = (game.offsetHeight * scale) + "px";
 }
 
 handleOrientation();

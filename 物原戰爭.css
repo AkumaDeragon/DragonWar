@@ -7024,11 +7024,11 @@ body.rulesBookViewing {
 html.mobileFixedViewport,
 body.mobileFixedViewport {
   width: 100vw;
-  height: 100vh;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   overscroll-behavior-x: none;
   touch-action: pan-y;
+  height: auto !important;
 }
 
 body.mobileFixedViewport #game {
