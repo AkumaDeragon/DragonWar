@@ -6997,3 +6997,61 @@ body.rulesBookViewing {
   font-weight: 1000;
   text-shadow: 0 0 10px rgba(243,211,122,.55);
 }
+
+
+/* =========================================================
+   使用者回饋修正：結束回合約 150px，手機整體固定縮放
+   ========================================================= */
+.riverEndTurnWrap {
+  flex: 0 0 150px !important;
+  width: 86px !important;
+  height: 150px !important;
+  margin-top: auto !important;
+}
+
+.riverEndTurnBtn {
+  width: 100% !important;
+  height: 150px !important;
+  min-height: 150px !important;
+  padding: 12px 12px !important;
+  font-size: 15px !important;
+  line-height: 1.25 !important;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: .12em !important;
+}
+
+body.mobileFixedViewport,
+body.mobileFixedViewport html {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+body.mobileFixedViewport #game {
+  margin: 0 !important;
+  width: 1500px !important;
+  max-width: none !important;
+  min-width: 1500px !important;
+  padding: 18px 16px 24px !important;
+  transform-origin: top left !important;
+  will-change: transform;
+  /* 讓 offsetHeight 量到真實高度，不要因為 overflow 而撐開 */
+  overflow: visible !important;
+}
+
+body.mobileFixedViewport .topBar {
+  position: relative !important;
+  top: auto !important;
+}
+
+body.mobileFixedViewport .rotateOverlay {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  html, body {
+    overflow: hidden !important;
+  }
+}
